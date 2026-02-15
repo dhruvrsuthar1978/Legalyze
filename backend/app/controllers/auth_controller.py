@@ -66,7 +66,7 @@ async def register_user(payload: UserRegisterRequest) -> dict:
         "name": payload.name,
         "email": payload.email,
         "password": hashed_pw,
-        "role": "user",
+        "role": str(payload.role or "user").lower(),
         "account_status": "active",
         "profile": {
             "phone": None,

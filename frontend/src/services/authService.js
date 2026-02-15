@@ -3,13 +3,13 @@ import api from './api';
 export const authService = {
   // Register new user
   register: async (userData) => {
-    const response = await api.post('/api/v1/auth/register', userData);
+    const response = await api.post('/api/auth/register', userData);
     return response.data;
   },
 
   // Login user
   login: async (credentials) => {
-    const response = await api.post('/api/v1/auth/login', credentials);
+    const response = await api.post('/api/auth/login', credentials);
     if (response.data.access_token) {
       localStorage.setItem('token', response.data.access_token);
     }
@@ -18,19 +18,31 @@ export const authService = {
 
   // Get current user profile
   getProfile: async () => {
-    const response = await api.get('/api/v1/auth/me');
+    const response = await api.get('/api/auth/me');
     return response.data;
   },
 
   // Update user profile
   updateProfile: async (userData) => {
-    const response = await api.put('/api/v1/auth/me', userData);
+    const response = await api.put('/api/auth/me/update', userData);
     return response.data;
   },
 
   // Change password
   changePassword: async (passwordData) => {
-    const response = await api.post('/api/v1/auth/change-password', passwordData);
+    const response = await api.post('/api/auth/change-password', passwordData);
+    return response.data;
+  },
+
+  // Forgot password
+  forgotPassword: async (email) => {
+    const response = await api.post('/api/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  // Reset password
+  resetPassword: async (payload) => {
+    const response = await api.post('/api/auth/reset-password', payload);
     return response.data;
   },
 

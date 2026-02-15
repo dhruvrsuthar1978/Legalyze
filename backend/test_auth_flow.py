@@ -1,7 +1,8 @@
+import os
 import requests
 import json
 
-BASE_URL = "http://localhost:8000/api"
+BASE_URL = os.environ.get("TEST_BASE_URL", "http://localhost:8000/api")
 
 print("=" * 60)
 print("TESTING AUTHENTICATION FLOW")

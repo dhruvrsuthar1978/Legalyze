@@ -1,10 +1,11 @@
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { uploadStart, uploadSuccess, uploadFailure } from '../store/contractsSlice';
 import { showToast } from '../store/uiSlice';
 import { contractService } from '../services/contractService';
+import { analysisService } from '../services/analysisService';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 
@@ -84,42 +85,119 @@ function UploadPage() {
     dispatch(uploadStart());
 
     try {
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 200);
-
-      // Get title from file name if not provided
+      // Choose chunked upload for larger files
+      const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
       const contractTitle = file.name.replace(/\.[^/.]+$/, "");
-      
-      // Call backend API
-      const result = await contractService.uploadContract(
-        file, 
-        contractTitle, 
-        'Uploaded via web interface'
-      );
+      let result = null;
+      const sessionKey = `upload_session_${file.name}_${file.size}`;
 
-      clearInterval(progressInterval);
-      setUploadProgress(100);
+      if (file.size <= CHUNK_SIZE) {
+        // Small file - single upload
+        const resp = await contractService.uploadContract(file, contractTitle, 'Uploaded via web interface');
+        result = resp;
+        setUploadProgress(50);
+      } else {
+        // Chunked upload flow with resume
+        let uploadId = localStorage.getItem(sessionKey);
+
+        if (!uploadId) {
+          const init = await contractService.initiateChunkedUpload(file.name, file.size);
+          uploadId = init.upload_id;
+          localStorage.setItem(sessionKey, uploadId);
+        }
+
+        const status = await contractService.getUploadStatus(uploadId);
+        const uploadedParts = (status && status.parts) || [];
+
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        let uploadedBytes = uploadedParts.reduce((acc, idx) => {
+          const start = idx * CHUNK_SIZE;
+          const end = Math.min(start + CHUNK_SIZE, file.size);
+          return acc + (end - start);
+        }, 0);
+
+        for (let i = 0; i < totalChunks; i++) {
+          if (uploadedParts.includes(i)) continue; // skip already uploaded
+          const start = i * CHUNK_SIZE;
+          const end = Math.min(start + CHUNK_SIZE, file.size);
+          const chunk = file.slice(start, end);
+          // Upload chunk (with retries handled in service)
+          await contractService.uploadChunk(uploadId, i, chunk);
+          uploadedBytes += (end - start);
+          setUploadProgress(Math.round((uploadedBytes / file.size) * 50));
+        }
+
+        // Complete upload
+        result = await contractService.completeChunkedUpload(uploadId, file.name, contractTitle, []);
+        setUploadProgress(60);
+        localStorage.removeItem(sessionKey);
+      }
+
+      // finalize UI
       setUploading(false);
-      setUploadStatus('success');
-
+      setUploadStatus('uploading');
       dispatch(uploadSuccess(result));
-      dispatch(showToast({
-        type: 'success',
-        title: 'Upload Successful',
-        message: 'Contract is being analyzed...',
-      }));
+      dispatch(showToast({ type: 'success', title: 'Upload Started', message: 'File uploaded, analysis will begin shortly.' }));
 
-      // Navigate to analysis page
-      setTimeout(() => {
-        navigate(`/contract/${result.id}`);
+      // Trigger analysis pipeline in background
+      try {
+        await analysisService.runAnalysis(result.id, 'async');
+      } catch (analysisStartError) {
+        // Ignore conflict when analysis already exists, fail for other errors
+        if (analysisStartError?.response?.status !== 409) {
+          throw analysisStartError;
+        }
+      }
+
+      // Start polling processing status
+      let finished = false;
+      let attempts = 0;
+      const maxAttempts = 120; // 4 minutes at 2s interval
+
+      setUploadStatus('processing');
+      setUploadProgress(5);
+
+      const pollInterval = setInterval(async () => {
+        attempts += 1;
+        try {
+          const statusRes = await contractService.getProcessingStatus(result.id);
+          const status = statusRes.status || statusRes.analysis_status || statusRes.state || 'processing';
+          const progress = statusRes.progress ?? statusRes.percent ?? null;
+
+          if (progress !== null && !isNaN(progress)) {
+            setUploadProgress(Math.min(95, Math.max(5, Math.round(progress))));
+          } else {
+            // animate progress slowly if no exact progress provided
+            setUploadProgress(prev => Math.min(95, prev + 5));
+          }
+
+          if (status === 'completed' || status === 'done' || status === 'finished') {
+            finished = true;
+            clearInterval(pollInterval);
+            setUploadProgress(100);
+            setUploadStatus('success');
+            dispatch(uploadSuccess(result));
+            dispatch(showToast({ type: 'success', title: 'Analysis Complete', message: 'Contract analysis finished.' }));
+            navigate(`/contract/${result.id}`);
+          } else if (status === 'failed' || status === 'error') {
+            finished = true;
+            clearInterval(pollInterval);
+            setUploadStatus('error');
+            setUploadProgress(0);
+            dispatch(uploadFailure('Analysis failed'));
+            dispatch(showToast({ type: 'error', title: 'Analysis Failed', message: statusRes.message || 'Analysis failed on server.' }));
+          } else if (attempts >= maxAttempts) {
+            finished = true;
+            clearInterval(pollInterval);
+            setUploadStatus('processing');
+            dispatch(showToast({ type: 'info', title: 'Processing Delayed', message: 'Analysis is taking longer than expected. You can check status on the contract page.' }));
+            navigate(`/contract/${result.id}`);
+          }
+
+        } catch (pollErr) {
+          // transient network error — keep polling until max attempts
+          console.warn('Polling error', pollErr);
+        }
       }, 2000);
 
     } catch (error) {
@@ -134,7 +212,6 @@ function UploadPage() {
       }));
     }
   };
-
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
@@ -146,7 +223,7 @@ function UploadPage() {
         {!file ? (
           <div
             className={`border-2 border-dashed rounded-lg p-12 text-center transition-all ${
-              dragActive ? 'border-[var(--color-primary-500)] bg-[var(--color-primary-50)]' : 'border-[var(--color-neutral-300)]'
+              dragActive ? 'border-(--color-primary-500) bg-(--color-primary-50)' : 'border-neutral-300'
             }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -166,6 +243,7 @@ function UploadPage() {
               className="hidden"
               onChange={handleChange}
               accept=".pdf,.docx"
+              aria-label="Upload contract file"
             />
             <label htmlFor="file-upload">
               <Button as="span" className="cursor-pointer">
@@ -199,10 +277,12 @@ function UploadPage() {
               )}
             </div>
 
-            {uploadStatus === 'uploading' && (
+            {(uploadStatus === 'uploading' || uploadStatus === 'processing') && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>Uploading...</span>
+                  <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                    {uploadStatus === 'processing' ? 'Analyzing...' : 'Uploading...'}
+                  </span>
                   <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>{uploadProgress}%</span>
                 </div>
                 <div className="w-full rounded-full h-2" style={{ backgroundColor: 'var(--color-neutral-200)' }}>
@@ -252,7 +332,7 @@ function UploadPage() {
         <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>What happens next?</h3>
         <div className="space-y-3">
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: 'var(--color-primary-100)' }}>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: 'var(--color-primary-100)' }}>
               <span className="text-xs font-bold" style={{ color: 'var(--color-primary-600)' }}>1</span>
             </div>
             <div>
@@ -261,7 +341,7 @@ function UploadPage() {
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: 'var(--color-primary-100)' }}>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: 'var(--color-primary-100)' }}>
               <span className="text-xs font-bold" style={{ color: 'var(--color-primary-600)' }}>2</span>
             </div>
             <div>
@@ -270,7 +350,7 @@ function UploadPage() {
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: 'var(--color-primary-100)' }}>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: 'var(--color-primary-100)' }}>
               <span className="text-xs font-bold" style={{ color: 'var(--color-primary-600)' }}>3</span>
             </div>
             <div>

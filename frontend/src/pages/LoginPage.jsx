@@ -5,6 +5,7 @@ import { loginStart, loginSuccess, loginFailure } from '../store/authSlice';
 import { showToast } from '../store/uiSlice';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import { authService } from '../services/authService';
 import Card from '../components/ui/Card';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -45,30 +46,25 @@ function LoginPage() {
     if (!validate()) return;
 
     dispatch(loginStart());
+    try {
+      const data = await authService.login({ email: formData.email, password: formData.password });
 
-    // Simulate API call
-    setTimeout(() => {
-      // Mock authentication - in real app, call API
-      if (formData.email === 'demo@legalyze.com' && formData.password === 'password123') {
-        dispatch(loginSuccess({
-          user: { name: 'Demo User', email: formData.email, role: 'Lawyer' },
-          token: 'mock-jwt-token-' + Date.now(),
-        }));
-        dispatch(showToast({
-          type: 'success',
-          title: 'Login Successful',
-          message: 'Welcome back!',
-        }));
-        navigate('/dashboard');
-      } else {
-        dispatch(loginFailure('Invalid credentials'));
-        dispatch(showToast({
-          type: 'error',
-          title: 'Login Failed',
-          message: 'Invalid email or password',
-        }));
-      }
-    }, 1000);
+      // Fetch user profile
+      const profile = await authService.getProfile();
+
+      dispatch(loginSuccess({
+        user: profile,
+        token: data.access_token || data.token || null,
+      }));
+
+      dispatch(showToast({ type: 'success', title: 'Login Successful', message: 'Welcome back!' }));
+      navigate('/dashboard');
+
+    } catch (err) {
+      const message = err.response?.data?.detail || err.message || 'Login failed';
+      dispatch(loginFailure(message));
+      dispatch(showToast({ type: 'error', title: 'Login Failed', message }));
+    }
   };
 
   return (
@@ -80,7 +76,7 @@ function LoginPage() {
       <Card className="w-full max-w-md relative z-10" glass>
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-14 h-14 bg-gradient-to-br from-[var(--color-primary-600)] to-[var(--color-accent-blue)] rounded-2xl flex items-center justify-center shadow-2xl animate-pulse-scale">
+            <div className="w-14 h-14 bg-linear-to-br from-(--color-primary-600) to-(--color-accent-blue) rounded-2xl flex items-center justify-center shadow-2xl animate-pulse-scale">
               <span className="text-white font-bold text-2xl">L</span>
             </div>
             <span className="text-3xl font-bold gradient-text-animated">Legalyze</span>
@@ -122,7 +118,7 @@ function LoginPage() {
           <div className="flex items-center justify-between text-sm">
             <label className="flex items-center gap-2 cursor-pointer group">
               <input type="checkbox" className="rounded-md border-2 w-4 h-4 smooth-transition" style={{ borderColor: 'var(--color-neutral-300)' }} />
-              <span style={{ color: 'var(--color-neutral-600)' }} className="group-hover:text-[var(--color-neutral-900)] smooth-transition">Remember me</span>
+              <span style={{ color: 'var(--color-neutral-600)' }} className="group-hover:text-neutral-900 smooth-transition">Remember me</span>
             </label>
             <Link to="/forgot-password" className="font-medium smooth-transition" style={{ color: 'var(--color-primary-600)' }}>
               Forgot Password?
@@ -147,11 +143,6 @@ function LoginPage() {
           </Link>
         </div>
 
-        <div className="mt-6 p-4 rounded-xl" style={{ backgroundColor: 'var(--color-info-light)', border: '2px solid var(--color-info)', color: 'var(--color-info)' }}>
-          <p className="font-bold mb-2 text-sm">Demo Credentials:</p>
-          <p className="text-sm">Email: demo@legalyze.com</p>
-          <p className="text-sm">Password: password123</p>
-        </div>
       </Card>
     </div>
   );

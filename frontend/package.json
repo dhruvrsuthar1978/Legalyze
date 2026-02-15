@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "test": "vitest",
+    "test:e2e": "playwright test",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -24,6 +26,10 @@
     "vite-plugin-svgr": "^4.5.0"
   },
   "devDependencies": {
+    "vitest": "^1.0.0",
+    "jsdom": "^22.1.0",
+    "@playwright/test": "^1.36.0",
+    "playwright": "^1.36.0",
     "@eslint/js": "^9.39.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",

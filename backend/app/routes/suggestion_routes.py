@@ -23,7 +23,7 @@ from app.models.clause_model import (
     SuggestionStatsResponse,
     CustomEditRequest
 )
-from app.middleware.auth_middleware import verify_token
+from app.middleware.auth_middleware import require_legal_user
 
 router = APIRouter(
     prefix="/suggestions",
@@ -72,7 +72,7 @@ async def get_suggestions(
         None,
         description="Filter by clause type e.g. Confidentiality, Payment"
     ),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     if status_filter and status_filter not in ["pending", "accepted", "rejected"]:
         raise HTTPException(
@@ -114,7 +114,7 @@ async def get_suggestions(
 )
 async def get_stats(
     contract_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await get_suggestion_stats(contract_id, current_user)
 
@@ -139,7 +139,7 @@ async def get_stats(
 async def get_clause_suggestion(
     contract_id: str,
     clause_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await get_suggestion_for_clause(contract_id, clause_id, current_user)
 
@@ -166,7 +166,7 @@ async def get_clause_suggestion(
 async def accept(
     contract_id: str,
     clause_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await accept_suggestion(contract_id, clause_id, current_user)
 
@@ -193,7 +193,7 @@ async def accept(
 async def reject(
     contract_id: str,
     clause_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await reject_suggestion(contract_id, clause_id, current_user)
 
@@ -222,7 +222,7 @@ async def edit_suggestion(
     contract_id: str,
     clause_id: str,
     payload: CustomEditRequest,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await custom_edit_suggestion(contract_id, clause_id, payload, current_user)
 
@@ -252,7 +252,7 @@ async def edit_suggestion(
 async def regenerate(
     contract_id: str,
     clause_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await regenerate_suggestion(contract_id, clause_id, current_user)
 
@@ -282,7 +282,7 @@ async def accept_all(
         None,
         description="Optionally limit to specific risk level: High | Medium | Low"
     ),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await accept_all_suggestions(contract_id, risk_level, current_user)
 
@@ -305,6 +305,6 @@ async def accept_all(
 )
 async def reject_all(
     contract_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await reject_all_suggestions(contract_id, current_user)

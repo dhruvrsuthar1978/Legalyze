@@ -12,13 +12,14 @@ from app.controllers.generation_controller import (
     list_generated_versions,
     delete_generated_version,
     preview_generated_contract
+    , generate_adhoc_preview
 )
 from app.models.contract_model import (
     GeneratedContractResponse,
     GeneratedContractListResponse,
     GeneratedContractPreviewResponse
 )
-from app.middleware.auth_middleware import verify_token
+from app.middleware.auth_middleware import require_legal_user
 
 router = APIRouter(
     prefix="/generate",
@@ -67,7 +68,7 @@ async def generate(
         True,
         description="Append analysis summary page to the generated document"
     ),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     if format not in ["pdf", "docx"]:
         raise HTTPException(
@@ -107,9 +108,26 @@ async def generate(
 )
 async def preview(
     contract_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await preview_generated_contract(contract_id, current_user)
+
+
+# ══════════════════════════════════════════════════════
+# Ad-hoc Generation Preview (no DB record)
+# POST /api/generate/adhoc/preview
+# ══════════════════════════════════════════════════════
+@router.post(
+    "/adhoc/preview",
+    status_code=status.HTTP_200_OK,
+    summary="Preview an ad-hoc generated contract",
+    description="Accepts contract parameters and returns a text preview without creating files."
+)
+async def adhoc_preview(
+    payload: dict,
+    current_user: dict = Depends(require_legal_user)
+):
+    return await generate_adhoc_preview(payload, current_user)
 
 
 # ══════════════════════════════════════════════════════
@@ -138,7 +156,7 @@ async def get_versions(
     contract_id: str,
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=50),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await list_generated_versions(
         contract_id=contract_id,
@@ -166,7 +184,7 @@ async def get_versions(
 async def get_version(
     contract_id: str,
     version_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await get_generated_contract(contract_id, version_id, current_user)
 
@@ -191,7 +209,7 @@ async def get_version(
 async def download(
     contract_id: str,
     version_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await download_generated_contract(contract_id, version_id, current_user)
 
@@ -218,6 +236,6 @@ async def download(
 async def delete_version(
     contract_id: str,
     version_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await delete_generated_version(contract_id, version_id, current_user)

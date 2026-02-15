@@ -247,6 +247,60 @@ async def preview_generated_contract(
     }
 
 
+async def generate_adhoc_preview(payload: dict, current_user: dict) -> dict:
+    """Generate a preview for an ad-hoc contract built from user inputs.
+
+    Payload expected fields: contract_type, party1, party2, duration, requirements
+    """
+    try:
+        contract_type = payload.get("contract_type", "agreement")
+        party1 = payload.get("party1_name", "Party 1")
+        party2 = payload.get("party2_name", "Party 2")
+        duration = payload.get("duration", "")
+        requirements = payload.get("requirements", "")
+
+        # Build a pseudo-original contract
+        original_contract = {
+            "filename": f"adhoc_{contract_type}.txt",
+            "title": f"Adhoc {contract_type}",
+            "category": contract_type,
+            "uploaded_at": datetime.utcnow(),
+        }
+
+        # Create a single 'clause' from requirements to include in document
+        clauses = []
+        if requirements:
+            clauses.append({
+                "clause_id": "req-1",
+                "clause_type": "custom_requirements",
+                "original_text": requirements,
+                "suggestion_status": "pending"
+            })
+
+        # Use generation_service to build document bytes for preview, but we only return text preview
+        from app.services.generation_service import generate_contract_document
+
+        file_bytes, filename, file_size = generate_contract_document(
+            original_contract=original_contract,
+            clauses=clauses,
+            accepted_clauses=[],
+            format="pdf",
+            include_summary=False,
+            version=1
+        )
+
+        # For preview, return a simple text summary
+        preview_text = f"Adhoc {contract_type} between {party1} and {party2}. Duration: {duration or 'Indefinite'}.\n\nRequirements:\n{requirements}\n"
+
+        return {
+            "preview_text": preview_text,
+            "filename": filename,
+            "estimated_pages": max(1, len(preview_text.split()) // 300)
+        }
+    except Exception as e:
+        raise Exception(f"Adhoc generation preview failed: {e}")
+
+
 # ══════════════════════════════════════════════════════════════════
 # LIST GENERATED VERSIONS
 # ══════════════════════════════════════════════════════════════════

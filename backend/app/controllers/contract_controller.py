@@ -22,6 +22,13 @@ from datetime import datetime, timedelta
 from bson import ObjectId
 from typing import Optional, List
 import logging
+import os
+import uuid
+import shutil
+from types import SimpleNamespace
+from glob import glob
+from fastapi import UploadFile
+import difflib
 
 logger = logging.getLogger("legalyze.contract")
 
@@ -668,3 +675,117 @@ async def bulk_delete_contracts(
         "failed_ids": failed_ids,
         "message": f"Successfully deleted {deleted_count} of {len(contract_ids)} contracts."
     }
+
+
+# ══════════════════════════════════════════════════════════════════
+# CHUNKED / RESUMABLE UPLOAD HELPERS
+# ══════════════════════════════════════════════════════════════════
+
+TMP_UPLOAD_ROOT = os.path.join(os.getcwd(), "uploads", "tmp")
+
+def _ensure_tmp_dir(upload_id: str) -> str:
+    path = os.path.join(TMP_UPLOAD_ROOT, upload_id)
+    os.makedirs(path, exist_ok=True)
+    return path
+
+async def initiate_chunked_upload(filename: str, total_size: int, current_user: dict) -> dict:
+    """Creates an upload_id and temp folder to receive chunks."""
+    upload_id = str(uuid.uuid4())
+    _ensure_tmp_dir(upload_id)
+    return {"upload_id": upload_id, "filename": filename, "total_size": total_size}
+
+async def upload_chunk(upload_id: str, chunk_index: int, chunk_file, current_user: dict) -> dict:
+    """Stores an uploaded chunk on disk under the temp upload folder."""
+    folder = _ensure_tmp_dir(upload_id)
+    part_path = os.path.join(folder, f"part_{chunk_index:06d}")
+    with open(part_path, "wb") as f:
+        contents = await chunk_file.read()
+        f.write(contents)
+    return {"upload_id": upload_id, "chunk_index": chunk_index, "size": os.path.getsize(part_path)}
+
+
+async def get_upload_status(upload_id: str) -> dict:
+    """Return list of uploaded part indexes and last_updated timestamp."""
+    folder = os.path.join(TMP_UPLOAD_ROOT, upload_id)
+    if not os.path.isdir(folder):
+        return {"upload_id": upload_id, "exists": False, "parts": []}
+
+    parts = sorted(glob(os.path.join(folder, "part_*")))
+    part_indexes = [int(os.path.basename(p).split("_")[1]) for p in parts]
+    return {"upload_id": upload_id, "exists": True, "parts": part_indexes}
+
+async def complete_chunked_upload(upload_id: str, filename: str, title: Optional[str], tags: List[str], current_user: dict, background_tasks) -> dict:
+    """Assembles all parts for upload_id and delegates to `upload_contract` for processing."""
+    folder = os.path.join(TMP_UPLOAD_ROOT, upload_id)
+    if not os.path.isdir(folder):
+        raise Exception("Upload ID not found or expired.")
+
+    parts = sorted(glob(os.path.join(folder, "part_*")))
+    if not parts:
+        raise Exception("No uploaded parts found for this upload_id.")
+
+    # Concatenate parts into bytes
+    assembled = bytearray()
+    for p in parts:
+        with open(p, "rb") as f:
+            assembled.extend(f.read())
+
+    # Create a simple file-like object with required attrs for upload_contract
+    dummy_file = SimpleNamespace()
+    dummy_file.filename = filename
+    # assume PDF if unknown
+    if filename.lower().endswith(".pdf"):
+        dummy_file.content_type = "application/pdf"
+    else:
+        dummy_file.content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+    # Call existing upload flow
+    try:
+        result = await upload_contract(
+            file=dummy_file,
+            contents=bytes(assembled),
+            title=title,
+            tags=tags,
+            current_user=current_user,
+            background_tasks=background_tasks
+        )
+    finally:
+        # Clean up temp parts
+        try:
+            shutil.rmtree(folder)
+        except Exception:
+            pass
+
+    return result
+
+
+async def compare_two_contracts(file1: UploadFile, file2: UploadFile, current_user: dict) -> dict:
+    """Simple comparison: extract text from both files and return diff summary."""
+    try:
+        # Read file bytes
+        b1 = await file1.read()
+        b2 = await file2.read()
+
+        # Use existing extractor to get text
+        from app.services.extractor_service import extract_text_from_file
+
+        text1, _, _ = extract_text_from_file(b1, file1.content_type)
+        text2, _, _ = extract_text_from_file(b2, file2.content_type)
+
+        # Split into lines for simple diff
+        lines1 = [l.strip() for l in text1.splitlines() if l.strip()]
+        lines2 = [l.strip() for l in text2.splitlines() if l.strip()]
+
+        diff = list(difflib.unified_diff(lines1, lines2, lineterm=''))
+
+        # Build lightweight difference items by looking for changed clause-like lines
+        differences = []
+        for i, line in enumerate(diff[:200]):
+            differences.append({"index": i, "text": line})
+
+        return {
+            "differences": differences,
+            "diff_lines": len(diff)
+        }
+    except Exception as e:
+        raise Exception(f"Comparison failed: {e}")

@@ -9,6 +9,11 @@ from fastapi.responses import StreamingResponse
 from typing import Optional
 from app.controllers.contract_controller import (
     upload_contract,
+    initiate_chunked_upload,
+    upload_chunk,
+    complete_chunked_upload,
+    compare_two_contracts,
+    get_upload_status,
     get_all_contracts,
     get_contract_by_id,
     delete_contract,
@@ -26,7 +31,7 @@ from app.models.contract_model import (
     ContractMetadataUpdateRequest,
     BulkDeleteRequest
 )
-from app.middleware.auth_middleware import verify_token
+from app.middleware.auth_middleware import require_legal_user
 
 router = APIRouter(
     prefix="/contracts",
@@ -73,7 +78,7 @@ async def upload(
         None,
         description="Comma-separated tags e.g. 'nda,employment,2024'"
     ),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     # ── Validate file type ──────────────────────────
     ALLOWED_TYPES = [
@@ -109,6 +114,104 @@ async def upload(
         current_user=current_user,
         background_tasks=background_tasks
     )
+
+
+# ══════════════════════════════════════════════════════
+# Chunked Upload: Initiate
+# POST /api/contracts/upload/initiate
+# ══════════════════════════════════════════════════════
+@router.post(
+    "/upload/initiate",
+    status_code=status.HTTP_201_CREATED,
+    summary="Initiate a chunked upload",
+    description="Creates an upload session and returns an `upload_id`."
+)
+async def initiate_upload(
+    filename: str = Query(..., description="Original filename (e.g. contract.pdf)"),
+    total_size: int = Query(..., description="Total size of file in bytes"),
+    current_user: dict = Depends(require_legal_user)
+):
+    return await initiate_chunked_upload(filename=filename, total_size=total_size, current_user=current_user)
+
+
+# ══════════════════════════════════════════════════════
+# Chunked Upload: Upload Part
+# POST /api/contracts/upload/{upload_id}/part
+# ══════════════════════════════════════════════════════
+@router.post(
+    "/upload/{upload_id}/part",
+    status_code=status.HTTP_200_OK,
+    summary="Upload a single chunk/part of an upload"
+)
+async def upload_part(
+    upload_id: str,
+    chunk_index: int = Query(..., description="0-based chunk index"),
+    chunk: UploadFile = File(..., description="Binary chunk data"),
+    current_user: dict = Depends(require_legal_user)
+):
+    return await upload_chunk(upload_id=upload_id, chunk_index=chunk_index, chunk_file=chunk, current_user=current_user)
+
+
+# ══════════════════════════════════════════════════════
+# Chunked Upload: Complete
+# POST /api/contracts/upload/{upload_id}/complete
+# ══════════════════════════════════════════════════════
+@router.post(
+    "/upload/{upload_id}/complete",
+    status_code=status.HTTP_200_OK,
+    summary="Complete a chunked upload and trigger processing"
+)
+async def complete_upload(
+    upload_id: str,
+    filename: str = Query(..., description="Original filename provided at initiation"),
+    title: Optional[str] = Query(None, description="Optional title for contract"),
+    tags: Optional[str] = Query(None, description="Comma-separated tags"),
+    background_tasks: BackgroundTasks = None,
+    current_user: dict = Depends(require_legal_user)
+):
+    tag_list = [t.strip() for t in tags.split(",")] if tags else []
+    return await complete_chunked_upload(
+        upload_id=upload_id,
+        filename=filename,
+        title=title,
+        tags=tag_list,
+        current_user=current_user,
+        background_tasks=background_tasks
+    )
+
+
+# ══════════════════════════════════════════════════════
+# Upload Status - list uploaded parts
+# GET /api/contracts/upload/{upload_id}/status
+# ══════════════════════════════════════════════════════
+@router.get(
+    "/upload/{upload_id}/status",
+    status_code=status.HTTP_200_OK,
+    summary="Get status of a chunked upload",
+)
+async def upload_status(
+    upload_id: str,
+    current_user: dict = Depends(require_legal_user)
+):
+    return await get_upload_status(upload_id)
+
+
+# ══════════════════════════════════════════════════════
+# Compare Two Contracts (upload two files)
+# POST /api/contracts/compare
+# ══════════════════════════════════════════════════════
+@router.post(
+    "/compare",
+    status_code=status.HTTP_200_OK,
+    summary="Compare two contract files",
+    description="Uploads two files and returns a diff summary"
+)
+async def compare_contracts(
+    file1: UploadFile = File(..., description="First contract file"),
+    file2: UploadFile = File(..., description="Second contract file"),
+    current_user: dict = Depends(require_legal_user)
+):
+    return await compare_two_contracts(file1, file2, current_user)
 
 
 # ══════════════════════════════════════════════════════
@@ -149,7 +252,7 @@ async def get_contracts(
     ),
     page: int = Query(1, ge=1, description="Page number (starts at 1)"),
     limit: int = Query(10, ge=1, le=100, description="Results per page (max 100)"),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     if order not in ["asc", "desc"]:
         raise HTTPException(
@@ -194,7 +297,7 @@ async def search(
     ),
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=50),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await search_contracts(
         query=q,
@@ -226,7 +329,7 @@ async def search(
     """
 )
 async def get_stats(
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await get_contract_stats(current_user)
 
@@ -255,7 +358,7 @@ async def get_stats(
 )
 async def get_contract(
     contract_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await get_contract_by_id(contract_id, current_user)
 
@@ -284,7 +387,7 @@ async def get_contract(
 async def update_metadata(
     contract_id: str,
     payload: ContractMetadataUpdateRequest,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await update_contract_metadata(contract_id, payload, current_user)
 
@@ -309,7 +412,7 @@ async def update_metadata(
 )
 async def download(
     contract_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await download_contract(contract_id, current_user)
 
@@ -337,7 +440,7 @@ async def download(
 )
 async def delete(
     contract_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await delete_contract(contract_id, current_user)
 
@@ -363,7 +466,7 @@ async def delete(
 )
 async def bulk_delete(
     payload: BulkDeleteRequest,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     if len(payload.contract_ids) > 20:
         raise HTTPException(

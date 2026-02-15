@@ -4,8 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { registerStart, registerSuccess, registerFailure } from '../store/authSlice';
 import { showToast } from '../store/uiSlice';
 import Input from '../components/ui/Input';
-import Select from '../components/ui/Select';
 import Button from '../components/ui/Button';
+import { authService } from '../services/authService';
 import Card from '../components/ui/Card';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -19,16 +19,9 @@ function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'Lawyer',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-
-  const roleOptions = [
-    { value: 'Admin', label: 'Admin' },
-    { value: 'Lawyer', label: 'Lawyer' },
-    { value: 'Client', label: 'Client' },
-  ];
 
   const validate = () => {
     const newErrors = {};
@@ -55,10 +48,6 @@ function RegisterPage() {
       newErrors.confirmPassword = 'Passwords do not match';
     }
     
-    if (!formData.role) {
-      newErrors.role = 'Please select a role';
-    }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -70,23 +59,28 @@ function RegisterPage() {
 
     dispatch(registerStart());
 
-    // Simulate API call
-    setTimeout(() => {
-      dispatch(registerSuccess({
-        user: { 
-          name: formData.name, 
-          email: formData.email, 
-          role: formData.role 
-        },
-        token: 'mock-jwt-token-' + Date.now(),
-      }));
-      dispatch(showToast({
-        type: 'success',
-        title: 'Account Created',
-        message: 'Welcome to Legalyze!',
-      }));
+    try {
+      // Register user via API
+      await authService.register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        confirm_password: formData.confirmPassword,
+      });
+
+      // Auto-login after registration
+      const loginData = await authService.login({ email: formData.email, password: formData.password });
+      const profile = await authService.getProfile();
+
+      dispatch(registerSuccess({ user: profile, token: loginData.access_token || loginData.token }));
+      dispatch(showToast({ type: 'success', title: 'Account Created', message: 'Welcome to Legalyze!' }));
       navigate('/dashboard');
-    }, 1000);
+
+    } catch (err) {
+      const message = err.response?.data?.detail || err.message || 'Registration failed';
+      dispatch(registerFailure(message));
+      dispatch(showToast({ type: 'error', title: 'Registration Failed', message }));
+    }
   };
 
   return (
@@ -94,7 +88,7 @@ function RegisterPage() {
       <Card className="w-full max-w-md" glass>
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-[var(--color-primary-600)] to-[var(--color-accent-blue)] rounded-2xl flex items-center justify-center shadow-xl">
+            <div className="w-12 h-12 bg-linear-to-br from-(--color-primary-600) to-(--color-accent-blue) rounded-2xl flex items-center justify-center shadow-xl">
               <span className="text-white font-bold text-2xl">L</span>
             </div>
             <span className="text-3xl font-bold gradient-text">Legalyze</span>
@@ -122,14 +116,6 @@ function RegisterPage() {
             error={errors.email}
             placeholder="you@example.com"
             autoComplete="email"
-          />
-
-          <Select
-            label="Role"
-            options={roleOptions}
-            value={formData.role}
-            onChange={(value) => setFormData({ ...formData, role: value })}
-            error={errors.role}
           />
 
           <div className="relative">

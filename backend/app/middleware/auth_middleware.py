@@ -13,6 +13,10 @@ logger = logging.getLogger("legalyze.auth_middleware")
 security = HTTPBearer()
 
 
+def normalize_role(role: Optional[str]) -> str:
+    return (role or "user").strip().lower()
+
+
 # ══════════════════════════════════════════════════════════════════
 # VERIFY TOKEN DEPENDENCY
 # ══════════════════════════════════════════════════════════════════
@@ -107,6 +111,7 @@ async def verify_token(
         # Attach user metadata to payload
         payload["name"] = user.get("name")
         payload["account_status"] = user.get("account_status")
+        payload["role"] = normalize_role(user.get("role", payload.get("role")))
         
     except HTTPException:
         raise
@@ -184,13 +189,13 @@ class RoleChecker:
     """
     
     def __init__(self, allowed_roles: list):
-        self.allowed_roles = allowed_roles
+        self.allowed_roles = [normalize_role(r) for r in allowed_roles]
     
     async def __call__(
         self,
         current_user: dict = Depends(verify_token)
     ) -> dict:
-        user_role = current_user.get("role", "user")
+        user_role = normalize_role(current_user.get("role", "user"))
         
         if user_role not in self.allowed_roles:
             logger.warning(
@@ -210,6 +215,9 @@ class RoleChecker:
 # ── Common Role Checkers ──────────────────────────────────────────
 require_admin = RoleChecker(["admin"])
 require_user_or_admin = RoleChecker(["user", "admin"])
+require_legal_user = RoleChecker(["admin", "lawyer", "client", "user"])
+require_lawyer_or_admin = RoleChecker(["admin", "lawyer"])
+require_client_or_admin = RoleChecker(["admin", "client"])
 
 
 # ══════════════════════════════════════════════════════════════════

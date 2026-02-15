@@ -24,12 +24,41 @@ from app.models.clause_model import (
     SingleClauseResponse,
     ExportReportResponse
 )
-from app.middleware.auth_middleware import verify_token
+from app.middleware.auth_middleware import require_legal_user, require_admin
+from app.ai.rag_pipeline import is_vector_store_ready, initialize_legal_knowledge_base
 
 router = APIRouter(
     prefix="/analysis",
     tags=["🔍 Contract Analysis"]
 )
+
+
+@router.get(
+    "/rag/status",
+    status_code=status.HTTP_200_OK,
+    summary="Get RAG vector store status",
+    description="Returns whether the Retrieval-Augmented Generation vector store is ready."
+)
+async def rag_status(current_user: dict = Depends(require_legal_user)):
+    return {
+        "rag_enabled": is_vector_store_ready(),
+        "vector_store_ready": is_vector_store_ready()
+    }
+
+
+@router.post(
+    "/rag/initialize",
+    status_code=status.HTTP_200_OK,
+    summary="Initialize default legal RAG knowledge base",
+    description="Builds the default legal knowledge vector store. Admin only."
+)
+async def rag_initialize(current_user: dict = Depends(require_admin)):
+    initialize_legal_knowledge_base()
+    return {
+        "success": True,
+        "message": "Legal knowledge base initialized successfully.",
+        "vector_store_ready": is_vector_store_ready()
+    }
 
 
 # ══════════════════════════════════════════════════════
@@ -76,7 +105,7 @@ async def analyze_contract(
         "sync",
         description="Execution mode: sync (wait) | async (background)"
     ),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     if mode not in ["sync", "async"]:
         raise HTTPException(
@@ -116,7 +145,7 @@ async def analyze_contract(
 async def reanalyze(
     contract_id: str,
     background_tasks: BackgroundTasks,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await reanalyze_contract(contract_id, current_user, background_tasks)
 
@@ -148,7 +177,7 @@ async def reanalyze(
 )
 async def get_analysis(
     contract_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await get_analysis_result(contract_id, current_user)
 
@@ -178,7 +207,7 @@ async def get_analysis(
 )
 async def get_summary(
     contract_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await get_analysis_summary(contract_id, current_user)
 
@@ -218,7 +247,7 @@ async def get_risky_clauses(
         None,
         description="Optional: filter by clause type e.g. Confidentiality, Payment"
     ),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     if level not in ["Low", "Medium", "High"]:
         raise HTTPException(
@@ -266,7 +295,7 @@ async def simplified_clauses(
         False,
         description="If true, return only High and Medium risk clauses"
     ),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await get_simplified_clauses(
         contract_id=contract_id,
@@ -300,7 +329,7 @@ async def simplified_clauses(
 async def get_clause(
     contract_id: str,
     clause_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await get_clause_by_id(contract_id, clause_id, current_user)
 
@@ -338,7 +367,7 @@ async def export_report(
         "pdf",
         description="Export format: pdf | json"
     ),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     if format not in ["pdf", "json"]:
         raise HTTPException(

@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6
+    restart: "no"
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_test_data:/data/db
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    depends_on:
+      - mongo
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/legalyze_test
+      - JWT_SECRET=devsecret
+      - S3_BUCKET=test-bucket
+      - AWS_ACCESS_KEY=test
+      - AWS_SECRET_KEY=test
+      - ENVIRONMENT=testing
+    volumes:
+      - .:/app:cached
+    links:
+      - mongo
+    command: ["pytest", "-q"]
+
+volumes:
+  mongo_test_data:

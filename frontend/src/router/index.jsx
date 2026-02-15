@@ -6,6 +6,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import LandingPage from '../pages/LandingPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
+import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import Dashboard from '../pages/Dashboard';
 import UploadPage from '../pages/UploadPage';
 import ContractAnalysisPage from '../pages/ContractAnalysisPage';
@@ -28,6 +29,10 @@ const router = createBrowserRouter([
   {
     path: '/register',
     element: <RegisterPage />,
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPasswordPage />,
   },
   {
     element: <ProtectedRoute />,

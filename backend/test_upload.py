@@ -4,7 +4,7 @@ import requests
 import os
 
 # First, login to get token
-BASE_URL = "http://localhost:8000/api"
+BASE_URL = os.environ.get("TEST_BASE_URL", "http://localhost:8000/api")
 
 print("🔑 Logging in...")
 login_response = requests.post(f"{BASE_URL}/auth/login", json={

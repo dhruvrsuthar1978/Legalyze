@@ -1,32 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleTheme } from '../store/uiSlice';
-import { User, Lock, Bell, Moon, Sun, Key, CreditCard, Trash2, Save, Mail, Phone } from 'lucide-react';
+import { setUser, logout } from '../store/authSlice';
+import { User, Lock, Bell, Moon, Sun, Save, Trash2 } from 'lucide-react';
+import { authService } from '../services/authService';
+import { showToast } from '../store/uiSlice';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 
 function SettingsPage() {
   const dispatch = useDispatch();
-  const { user } = useSelector(state => state.auth);
-  const { theme } = useSelector(state => state.ui);
-  
-  // Profile Settings
-  const [profileData, setProfileData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: '',
-    company: '',
-  });
+  const { user } = useSelector((state) => state.auth);
+  const { theme } = useSelector((state) => state.ui);
 
-  // Password Settings
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: '',
+    phone: '',
+    organization: '',
+    job_title: '',
+  });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
-
-  // Notification Settings
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
     contractUploaded: true,
@@ -35,125 +35,102 @@ function SettingsPage() {
     weeklyReport: false,
   });
 
-  const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    setProfileData({
+      name: user?.name || '',
+      phone: user?.profile?.phone || '',
+      organization: user?.profile?.organization || '',
+      job_title: user?.profile?.job_title || '',
+    });
+  }, [user]);
 
-  const handleSaveProfile = () => {
-    setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
-      // Show success toast
-    }, 1000);
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    try {
+      const payload = {
+        name: profileData.name,
+        phone: profileData.phone || null,
+        organization: profileData.organization || null,
+        job_title: profileData.job_title || null,
+      };
+      const updated = await authService.updateProfile(payload);
+      dispatch(setUser(updated));
+      dispatch(showToast({ type: 'success', title: 'Profile Saved', message: 'Settings updated successfully.' }));
+    } catch (err) {
+      const message = err.response?.data?.detail || err.message || 'Failed to update profile';
+      dispatch(showToast({ type: 'error', title: 'Update Failed', message }));
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
-  const handleChangePassword = () => {
-    setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
+  const handleChangePassword = async () => {
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      dispatch(showToast({ type: 'error', title: 'Missing Fields', message: 'Fill all password fields.' }));
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      await authService.changePassword({
+        current_password: passwordData.currentPassword,
+        new_password: passwordData.newPassword,
+        confirm_password: passwordData.confirmPassword,
+      });
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    }, 1000);
+      dispatch(showToast({ type: 'success', title: 'Password Changed', message: 'Please log in again.' }));
+      dispatch(logout());
+    } catch (err) {
+      const message = err.response?.data?.detail || err.message || 'Failed to change password';
+      dispatch(showToast({ type: 'error', title: 'Password Change Failed', message }));
+    } finally {
+      setSavingPassword(false);
+    }
   };
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      {/* Header */}
       <div>
         <h1 className="text-4xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>Settings</h1>
-        <p className="text-lg" style={{ color: 'var(--color-text-tertiary)' }}>
-          Manage your account preferences and settings
-        </p>
+        <p className="text-lg" style={{ color: 'var(--color-text-tertiary)' }}>Manage your account and preferences</p>
       </div>
 
-      {/* Profile Settings */}
       <Card>
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-accent-blue))' }}>
-            <User className="w-6 h-6" style={{ color: 'white' }} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Profile Settings</h2>
-            <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Update your personal information</p>
-          </div>
+          <User className="w-6 h-6" />
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Profile Settings</h2>
         </div>
-
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Full Name"
-              value={profileData.name}
-              onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-              placeholder="John Doe"
-            />
-            <Input
-              label="Email Address"
-              type="email"
-              value={profileData.email}
-              onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-              placeholder="john@example.com"
-            />
+            <Input label="Full Name" value={profileData.name} onChange={(e) => setProfileData((p) => ({ ...p, name: e.target.value }))} />
+            <Input label="Email Address" value={user?.email || ''} disabled />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Phone Number"
-              type="tel"
-              value={profileData.phone}
-              onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-              placeholder="+1 (555) 000-0000"
-            />
-            <Input
-              label="Company Name"
-              value={profileData.company}
-              onChange={(e) => setProfileData({ ...profileData, company: e.target.value })}
-              placeholder="ABC Law Firm"
-            />
+            <Input label="Phone (E.164)" value={profileData.phone} onChange={(e) => setProfileData((p) => ({ ...p, phone: e.target.value }))} placeholder="+14155552671" />
+            <Input label="Organization" value={profileData.organization} onChange={(e) => setProfileData((p) => ({ ...p, organization: e.target.value }))} />
           </div>
-          <div className="flex justify-end pt-4">
-            <Button onClick={handleSaveProfile} loading={saving} className="gap-2">
+          <Input label="Job Title" value={profileData.job_title} onChange={(e) => setProfileData((p) => ({ ...p, job_title: e.target.value }))} />
+          <div className="flex justify-end pt-2">
+            <Button onClick={handleSaveProfile} loading={savingProfile} className="gap-2">
               <Save className="w-4 h-4" style={{ color: 'white' }} />
-              Save Changes
+              Save Profile
             </Button>
           </div>
         </div>
       </Card>
 
-      {/* Security Settings */}
       <Card>
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--color-error), #DC2626)' }}>
-            <Lock className="w-6 h-6" style={{ color: 'white' }} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Security</h2>
-            <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Manage your password and security settings</p>
-          </div>
+          <Lock className="w-6 h-6" />
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Security</h2>
         </div>
-
         <div className="space-y-4">
-          <Input
-            label="Current Password"
-            type="password"
-            value={passwordData.currentPassword}
-            onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-            placeholder="Enter current password"
-          />
+          <Input label="Current Password" type="password" value={passwordData.currentPassword} onChange={(e) => setPasswordData((p) => ({ ...p, currentPassword: e.target.value }))} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="New Password"
-              type="password"
-              value={passwordData.newPassword}
-              onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-              placeholder="Enter new password"
-              helperText="Minimum 8 characters"
-            />
-            <Input
-              label="Confirm New Password"
-              type="password"
-              value={passwordData.confirmPassword}
-              onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-              placeholder="Confirm new password"
-            />
+            <Input label="New Password" type="password" value={passwordData.newPassword} onChange={(e) => setPasswordData((p) => ({ ...p, newPassword: e.target.value }))} />
+            <Input label="Confirm New Password" type="password" value={passwordData.confirmPassword} onChange={(e) => setPasswordData((p) => ({ ...p, confirmPassword: e.target.value }))} />
           </div>
-          <div className="flex justify-end pt-4">
-            <Button onClick={handleChangePassword} loading={saving} className="gap-2">
+          <div className="flex justify-end pt-2">
+            <Button onClick={handleChangePassword} loading={savingPassword} className="gap-2">
               <Lock className="w-4 h-4" style={{ color: 'white' }} />
               Change Password
             </Button>
@@ -161,132 +138,54 @@ function SettingsPage() {
         </div>
       </Card>
 
-      {/* Appearance */}
       <Card>
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--color-accent-purple), #8B5CF6)' }}>
-            {theme === 'dark' ? <Moon className="w-6 h-6" style={{ color: 'white' }} /> : <Sun className="w-6 h-6" style={{ color: 'white' }} />}
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Appearance</h2>
-            <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Customize how Legalyze looks</p>
-          </div>
+          {theme === 'dark' ? <Moon className="w-6 h-6" /> : <Sun className="w-6 h-6" />}
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Appearance</h2>
         </div>
-
         <div className="flex items-center justify-between p-4 rounded-xl" style={{ background: 'var(--color-bg-tertiary)' }}>
-          <div className="flex items-center gap-3">
-            {theme === 'dark' ? <Moon className="w-5 h-5" style={{ color: 'var(--color-text-secondary)' }} /> : <Sun className="w-5 h-5" style={{ color: 'var(--color-text-secondary)' }} />}
-            <div>
-              <p className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>Dark Mode</p>
-              <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Use dark theme for the interface</p>
-            </div>
-          </div>
+          <p style={{ color: 'var(--color-text-primary)' }}>Dark Mode</p>
           <button
             onClick={() => dispatch(toggleTheme())}
-            className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-              theme === 'dark' ? 'bg-[var(--color-primary-600)]' : 'bg-[var(--color-neutral-300)]'
-            }`}
+            className={`relative inline-flex h-8 w-14 items-center rounded-full ${theme === 'dark' ? 'bg-[var(--color-primary-600)]' : 'bg-[var(--color-neutral-300)]'}`}
           >
-            <span
-              className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                theme === 'dark' ? 'translate-x-7' : 'translate-x-1'
-              }`}
-            />
+            <span className={`inline-block h-6 w-6 transform rounded-full bg-white ${theme === 'dark' ? 'translate-x-7' : 'translate-x-1'}`} />
           </button>
         </div>
       </Card>
 
-      {/* Notifications */}
       <Card>
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--color-accent-teal), #14B8A6)' }}>
-            <Bell className="w-6 h-6" style={{ color: 'white' }} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Notifications</h2>
-            <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Choose what notifications you receive</p>
-          </div>
+          <Bell className="w-6 h-6" />
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Notifications</h2>
         </div>
-
         <div className="space-y-3">
           {[
-            { key: 'emailNotifications', label: 'Email Notifications', desc: 'Receive notifications via email' },
-            { key: 'contractUploaded', label: 'Contract Uploaded', desc: 'Notify when a contract is uploaded' },
-            { key: 'analysisComplete', label: 'Analysis Complete', desc: 'Notify when analysis is finished' },
-            { key: 'riskAlerts', label: 'Risk Alerts', desc: 'Get alerts for high-risk contracts' },
-            { key: 'weeklyReport', label: 'Weekly Report', desc: 'Receive weekly summary of activities' },
+            { key: 'emailNotifications', label: 'Email Notifications' },
+            { key: 'contractUploaded', label: 'Contract Uploaded' },
+            { key: 'analysisComplete', label: 'Analysis Complete' },
+            { key: 'riskAlerts', label: 'Risk Alerts' },
+            { key: 'weeklyReport', label: 'Weekly Report' },
           ].map((item) => (
-            <div key={item.key} className="flex items-center justify-between p-4 rounded-xl hover:bg-[var(--color-bg-tertiary)] transition-colors">
-              <div>
-                <p className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>{item.label}</p>
-                <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{item.desc}</p>
-              </div>
+            <div key={item.key} className="flex items-center justify-between p-3 rounded-xl hover:bg-[var(--color-bg-tertiary)]">
+              <p style={{ color: 'var(--color-text-primary)' }}>{item.label}</p>
               <button
-                onClick={() => setNotifications({ ...notifications, [item.key]: !notifications[item.key] })}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-                  notifications[item.key] ? 'bg-[var(--color-primary-600)]' : 'bg-[var(--color-neutral-300)]'
-                }`}
+                onClick={() => setNotifications((p) => ({ ...p, [item.key]: !p[item.key] }))}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full ${notifications[item.key] ? 'bg-[var(--color-primary-600)]' : 'bg-[var(--color-neutral-300)]'}`}
               >
-                <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                    notifications[item.key] ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
+                <span className={`inline-block h-6 w-6 transform rounded-full bg-white ${notifications[item.key] ? 'translate-x-7' : 'translate-x-1'}`} />
               </button>
             </div>
           ))}
         </div>
       </Card>
 
-      {/* API Access */}
       <Card>
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--color-accent-orange), #F97316)' }}>
-            <Key className="w-6 h-6" style={{ color: 'white' }} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>API Access</h2>
-            <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Manage your API keys for integrations</p>
-          </div>
+          <Trash2 className="w-6 h-6" />
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--color-error)' }}>Danger Zone</h2>
         </div>
-
-        <div className="p-6 rounded-xl" style={{ background: 'var(--color-bg-tertiary)', border: '2px dashed var(--color-neutral-300)' }}>
-          <div className="text-center">
-            <Key className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--color-neutral-400)' }} />
-            <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>No API Keys Yet</h3>
-            <p className="text-sm mb-6" style={{ color: 'var(--color-text-tertiary)' }}>
-              Generate an API key to integrate Legalyze with your applications
-            </p>
-            <Button variant="outline">Generate API Key</Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Danger Zone */}
-      <Card>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-error)' }}>
-            <Trash2 className="w-6 h-6" style={{ color: 'white' }} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--color-error)' }}>Danger Zone</h2>
-            <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Irreversible account actions</p>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-xl" style={{ background: 'var(--color-error-light)', border: '2px solid var(--color-error)' }}>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--color-error)' }}>Delete Account</h3>
-              <p className="text-sm" style={{ color: 'var(--color-error)' }}>
-                Once you delete your account, there is no going back. All your data will be permanently deleted.
-              </p>
-            </div>
-            <Button variant="danger" className="flex-shrink-0">
-              Delete Account
-            </Button>
-          </div>
-        </div>
+        <p style={{ color: 'var(--color-text-tertiary)' }}>Account deletion is not exposed by API yet.</p>
       </Card>
     </div>
   );

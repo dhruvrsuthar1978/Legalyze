@@ -28,7 +28,7 @@ function Sidebar() {
     { path: '/profile', label: 'Profile & History', icon: User },
   ];
 
-  if (user?.role === 'Admin') {
+  if ((user?.role || '').toLowerCase() === 'admin') {
     menuItems.push({ path: '/admin', label: 'Admin Panel', icon: Users });
   }
 

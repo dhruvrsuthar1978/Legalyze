@@ -2,8 +2,16 @@ import { Users, Activity, AlertCircle, TrendingUp } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
+import { useSelector } from 'react-redux';
+import { Navigate } from 'react-router-dom';
 
 function AdminPage() {
+  const { user } = useSelector(state => state.auth);
+
+  // Only allow Admin users to access this page
+  if (!user || (user.role || '').toLowerCase() !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
   const stats = [
     { label: 'Total Users', value: '1,234', icon: Users, color: 'blue' },
     { label: 'Active Today', value: '89', icon: Activity, color: 'green' },

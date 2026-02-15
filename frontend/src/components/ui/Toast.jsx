@@ -59,9 +59,9 @@ function Toast() {
   const currentStyle = styles[toast.type || 'info'];
 
   return (
-    <div className="fixed top-20 right-6 z-50 animate-slide-in">
-      <div className={`floating-island flex items-center gap-4 px-5 py-4 min-w-[320px] ${currentStyle.bg} ${currentStyle.border} border-2`}>
-        <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${currentStyle.iconBg}`}>
+    <div className="fixed top-20 right-6 z-50 animate-slide-in" aria-live="polite">
+      <div role="status" className={`floating-island flex items-center gap-4 px-5 py-4 min-w-[320px] ${currentStyle.bg} ${currentStyle.border} border-2`}>
+        <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${currentStyle.iconBg}`}>
           <div style={{ color: currentStyle.iconColor }}>
             {icons[toast.type || 'info']}
           </div>
@@ -76,7 +76,8 @@ function Toast() {
         </div>
         <button
           onClick={() => dispatch(hideToast())}
-          className="flex-shrink-0 p-1.5 rounded-lg hover:bg-white/50 smooth-transition"
+          className="shrink-0 p-1.5 rounded-lg hover:bg-white/50 smooth-transition"
+          aria-label="Dismiss notification"
         >
           <X className="w-4 h-4" />
         </button>

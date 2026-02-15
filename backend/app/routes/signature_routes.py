@@ -22,7 +22,7 @@ from app.models.signature_model import (
     CountersignRequestPayload,
     CountersignStatusResponse
 )
-from app.middleware.auth_middleware import verify_token
+from app.middleware.auth_middleware import require_legal_user
 
 router = APIRouter(
     prefix="/signatures",
@@ -64,7 +64,7 @@ async def sign(
         None,
         description="Specific generated version to sign. Signs latest version if omitted."
     ),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await sign_contract(contract_id, version_id, current_user)
 
@@ -102,7 +102,7 @@ async def verify_signature(
         None,
         description="Specific version to verify. Verifies latest version if omitted."
     ),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await verify_contract_signature(contract_id, version_id, current_user)
 
@@ -129,7 +129,7 @@ async def verify_signature(
 )
 async def get_signature(
     contract_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await get_signature_info(contract_id, current_user)
 
@@ -158,7 +158,7 @@ async def get_signature(
 )
 async def get_history(
     contract_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await get_signature_history(contract_id, current_user)
 
@@ -195,7 +195,7 @@ async def get_history(
 async def request_countersignature(
     contract_id: str,
     payload: CountersignRequestPayload,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await request_countersign(contract_id, payload, current_user)
 
@@ -221,7 +221,7 @@ async def request_countersignature(
 )
 async def countersign_status(
     contract_id: str,
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await get_countersign_status(contract_id, current_user)
 
@@ -258,6 +258,6 @@ async def revoke(
         None,
         description="Optional reason for revocation (logged in audit trail)"
     ),
-    current_user: dict = Depends(verify_token)
+    current_user: dict = Depends(require_legal_user)
 ):
     return await revoke_signature(contract_id, reason, current_user)

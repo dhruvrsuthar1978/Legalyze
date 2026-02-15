@@ -6,7 +6,7 @@ Legalyze API - AI-Powered Legal Contract Analysis Platform
 Main application entry point.
 """
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, Depends
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -33,6 +33,7 @@ from app.middleware.error_handler import (
     LegalyzeException
 )
 from app.middleware.rate_limiter import limiter
+from app.middleware.auth_middleware import require_admin
 
 # ── Routes ────────────────────────────────────────────────────────
 from app.routes import (
@@ -318,7 +319,7 @@ async def health_check():
 
 
 @app.get("/stats", tags=["Stats"])
-async def get_stats():
+async def get_stats(current_user: dict = Depends(require_admin)):
     """
     Returns system statistics (admin only in production).
     """

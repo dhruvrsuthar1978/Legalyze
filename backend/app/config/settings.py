@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     SMTP_PORT: int | None = None
     SMTP_USERNAME: str = ""
     SMTP_PASSWORD: str = ""
+    SMTP_USE_TLS: bool = True
+    SMTP_USE_STARTTLS: bool = False
+    SMTP_TIMEOUT_SECONDS: int = 20
+    EMAIL_ENABLED: bool = True
     FROM_EMAIL: str = ""
     FROM_NAME: str = "Legalyze"
     

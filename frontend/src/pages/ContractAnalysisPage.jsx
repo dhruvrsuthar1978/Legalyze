@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { ChevronDown, Check, X } from 'lucide-react';
 import { analysisService } from '../services/analysisService';
-import { ragService } from '../services/ragService';
+import { contractService } from '../services/contractService';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -19,27 +19,41 @@ function ContractAnalysisPage() {
     const fetchContractData = async () => {
       try {
         setLoading(true);
-        
-        // Fetch contract analysis data
-        const analysisData = await analysisService.getClauseAnalysis(id);
-        
+
+        // Fetch contract metadata
+        const contractData = await contractService.getContract(id);
+
+        // Fetch analysis data (run analysis once if not available yet)
+        let analysisData;
+        try {
+          analysisData = await analysisService.getClauseAnalysis(id);
+        } catch (analysisError) {
+          if (analysisError?.response?.status === 404) {
+            analysisData = await analysisService.runAnalysis(id, 'sync');
+          } else {
+            throw analysisError;
+          }
+        }
+
         setContract({
           id,
-          name: analysisData.contract.title || 'Contract Analysis',
-          uploadedAt: new Date(analysisData.contract.created_at).toLocaleDateString(),
-          status: analysisData.contract.status,
+          name: contractData.title || contractData.filename || 'Contract Analysis',
+          uploadedAt: contractData.uploaded_at
+            ? new Date(contractData.uploaded_at).toLocaleDateString()
+            : 'Unknown',
+          status: contractData.analysis_status || 'pending',
         });
-        
-        setClauses(analysisData.clauses.map(clause => ({
-          id: clause.id,
-          title: clause.title,
-          risk: clause.risk_level,
+
+        setClauses((analysisData.clauses || []).map(clause => ({
+          id: clause.clause_id,
+          title: clause.clause_type,
+          risk: (clause.risk_level || 'Low').toLowerCase(),
           originalText: clause.original_text,
           plainEnglish: clause.simplified_text || 'Processing...',
-          riskReason: clause.risk_explanation || 'Analysis in progress...',
-          suggestion: clause.ai_suggestion || 'Generating suggestions...',
+          riskReason: clause.risk_reason || 'Analysis in progress...',
+          suggestion: clause.suggestion || 'Generating suggestions...',
         })));
-        
+
       } catch (err) {
         setError(err.message);
       } finally {

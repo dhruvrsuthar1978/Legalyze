@@ -99,6 +99,16 @@ npm run dev
 http://localhost:5173
 ```
 
+### Environment variables
+
+The frontend expects the backend API base URL in the environment variable `VITE_API_URL`. Example `.env` in the `frontend/` folder:
+
+```
+VITE_API_URL=http://localhost:8000
+```
+
+Make sure the backend allows CORS from the frontend origin (see backend `app/config/settings.py`).
+
 ### Demo Credentials
 
 For testing the login functionality:

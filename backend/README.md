@@ -6,7 +6,25 @@ Legalyze uses advanced NLP, transformer models, and RAG to analyze legal contrac
 
 ---
 
-## 🚀 Features
+## � Project Background
+
+### The Challenge
+Legal contracts form the foundation of modern commerce, yet remain paradoxically inaccessible to those they bind. The average commercial contract spans 20-50 pages of dense legal terminology, creating a fundamental asymmetry: corporations employ legal departments to scrutinize every clause, while individual consumers and small businesses routinely sign contracts they do not fully understand. According to a 2023 legal technology study, over 68% of small businesses sign contracts without legal review due to cost constraints.
+
+### The Solution
+Legalyze addresses these challenges through a purpose-built AI architecture combining NLP precision with legal domain expertise. Unlike generic LLM wrappers, Legalyze implements:
+
+*   **Retrieval-Augmented Generation (RAG)**: Grounds analysis in verified legal principles to prevent hallucinations.
+*   **Specialized NLP Pipeline**: Uses spaCy for intelligent clause extraction and semantic classification.
+*   **Risk Scoring**: Evaluates clauses based on fairness metrics and detects exploitative provisions.
+*   **Plain-English Translation**: Preserves legal nuance while making terms accessible.
+*   **Integrated Workflow**: Combines analysis, negotiation (AI suggestions), and execution (digital signatures) in one platform.
+
+This system democratizes legal understanding, allowing users to identify risks and negotiate fair terms without the prohibitive cost of traditional counsel.
+
+---
+
+## �🚀 Features
 
 ✅ **Contract Upload & Extraction**  
 - PDF/DOCX support with OCR for scanned documents
@@ -118,6 +136,19 @@ mkdir -p logs uploads generated vector_store
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+### Running Tests (Docker recommended)
+
+On Windows the Python dependencies such as `PyMuPDF` or `Pillow` may require native build tools.
+To avoid local build issues, run the test suite inside Docker which uses Linux prebuilt wheels:
+
+```bash
+cd backend
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from api
+```
+
+The `api` service builds an image with system dependencies, runs `pip install -r requirements.txt`, and executes `pytest` against a temporary `mongo` service.
+
 
 ### Production
 ```bash

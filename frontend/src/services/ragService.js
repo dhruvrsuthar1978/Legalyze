@@ -3,7 +3,7 @@ import api from './api';
 export const ragService = {
   // Ask questions about contracts using RAG
   query: async (query, contractId = null) => {
-    const response = await api.post('/api/v1/rag/query', {
+    const response = await api.post('/api/rag/query', {
       query,
       contract_id: contractId
     });
@@ -12,13 +12,13 @@ export const ragService = {
 
   // Get contract insights
   getContractInsights: async (contractId) => {
-    const response = await api.get(`/api/v1/rag/contract/${contractId}/insights`);
+    const response = await api.get(`/api/rag/contract/${contractId}/insights`);
     return response.data;
   },
 
   // Ask specific questions about a contract
   askAboutContract: async (contractId, question) => {
-    const response = await api.post(`/api/v1/rag/contract/${contractId}/ask?question=${encodeURIComponent(question)}`);
+    const response = await api.post(`/api/rag/contract/${contractId}/ask?question=${encodeURIComponent(question)}`);
     return response.data;
   },
 
@@ -30,7 +30,7 @@ export const ragService = {
       limit: limit.toString()
     });
 
-    const response = await api.get(`/api/v1/rag/similar-clauses?${params.toString()}`);
+    const response = await api.get(`/api/rag/similar-clauses?${params.toString()}`);
     return response.data;
   },
 
@@ -39,13 +39,13 @@ export const ragService = {
     const params = new URLSearchParams({ concept });
     if (context) params.append('context', context);
 
-    const response = await api.post(`/api/v1/rag/explain?${params.toString()}`);
+    const response = await api.post(`/api/rag/explain?${params.toString()}`);
     return response.data;
   },
 
   // Get knowledge base stats
   getKnowledgeBaseStats: async () => {
-    const response = await api.get('/api/v1/rag/knowledge-base/stats');
+    const response = await api.get('/api/rag/knowledge-base/stats');
     return response.data;
   }
 };
