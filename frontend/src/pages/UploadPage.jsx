@@ -1,0 +1,287 @@
+import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { uploadStart, uploadSuccess, uploadFailure } from '../store/contractsSlice';
+import { showToast } from '../store/uiSlice';
+import { contractService } from '../services/contractService';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+
+function UploadPage() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [file, setFile] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState(null);
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleChange = (e) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      handleFile(e.target.files[0]);
+    }
+  };
+
+  const handleFile = (selectedFile) => {
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+    if (!allowedTypes.includes(selectedFile.type)) {
+      dispatch(showToast({
+        type: 'error',
+        title: 'Invalid File Type',
+        message: 'Please upload a PDF or DOCX file',
+      }));
+      return;
+    }
+
+    if (selectedFile.size > maxSize) {
+      dispatch(showToast({
+        type: 'error',
+        title: 'File Too Large',
+        message: 'Maximum file size is 10MB',
+      }));
+      return;
+    }
+
+    setFile(selectedFile);
+    setUploadStatus(null);
+  };
+
+  const removeFile = () => {
+    setFile(null);
+    setUploadStatus(null);
+    setUploadProgress(0);
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+
+    setUploading(true);
+    setUploadStatus('uploading');
+    dispatch(uploadStart());
+
+    try {
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
+      // Get title from file name if not provided
+      const contractTitle = file.name.replace(/\.[^/.]+$/, "");
+      
+      // Call backend API
+      const result = await contractService.uploadContract(
+        file, 
+        contractTitle, 
+        'Uploaded via web interface'
+      );
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      setUploading(false);
+      setUploadStatus('success');
+
+      dispatch(uploadSuccess(result));
+      dispatch(showToast({
+        type: 'success',
+        title: 'Upload Successful',
+        message: 'Contract is being analyzed...',
+      }));
+
+      // Navigate to analysis page
+      setTimeout(() => {
+        navigate(`/contract/${result.id}`);
+      }, 2000);
+
+    } catch (error) {
+      setUploading(false);
+      setUploadStatus('error');
+      
+      dispatch(uploadFailure(error.message));
+      dispatch(showToast({
+        type: 'error',
+        title: 'Upload Failed',
+        message: error.response?.data?.detail || 'Please try again',
+      }));
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Upload Contract 📄</h1>
+        <p className="mt-1" style={{ color: 'var(--color-text-tertiary)' }}>Upload your PDF or DOCX contract for AI-powered analysis</p>
+      </div>
+
+      <Card>
+        {!file ? (
+          <div
+            className={`border-2 border-dashed rounded-lg p-12 text-center transition-all ${
+              dragActive ? 'border-[var(--color-primary-500)] bg-[var(--color-primary-50)]' : 'border-[var(--color-neutral-300)]'
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <Upload className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--color-neutral-400)' }} />
+            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>
+              Drop your contract here
+            </h3>
+            <p className="text-sm mb-4" style={{ color: 'var(--color-text-tertiary)' }}>
+              or click to browse your files
+            </p>
+            <input
+              type="file"
+              id="file-upload"
+              className="hidden"
+              onChange={handleChange}
+              accept=".pdf,.docx"
+            />
+            <label htmlFor="file-upload">
+              <Button as="span" className="cursor-pointer">
+                Select File
+              </Button>
+            </label>
+            <p className="text-xs mt-4" style={{ color: 'var(--color-text-tertiary)' }}>
+              Supported formats: PDF, DOCX (Max size: 10MB)
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-tertiary)' }}>
+              <div className="flex items-center gap-3">
+                <FileText className="w-10 h-10" style={{ color: 'var(--color-primary-600)' }} />
+                <div>
+                  <p className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{file.name}</p>
+                  <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+              </div>
+              {uploadStatus !== 'uploading' && uploadStatus !== 'success' && (
+                <button
+                  onClick={removeFile}
+                  className="hover:text-red-600 transition-colors"
+                  style={{ color: 'var(--color-neutral-400)' }}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+
+            {uploadStatus === 'uploading' && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>Uploading...</span>
+                  <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>{uploadProgress}%</span>
+                </div>
+                <div className="w-full rounded-full h-2" style={{ backgroundColor: 'var(--color-neutral-200)' }}>
+                  <div
+                    className="h-2 rounded-full transition-all duration-300"
+                    style={{ backgroundColor: 'var(--color-primary-600)', width: `${uploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {uploadStatus === 'success' && (
+              <div className="flex items-center gap-2 p-4 rounded-lg" style={{ backgroundColor: 'var(--color-success-light)', border: '1px solid var(--color-success)' }}>
+                <CheckCircle className="w-5 h-5" style={{ color: 'var(--color-success)' }} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium" style={{ color: 'var(--color-success)' }}>Upload Successful!</p>
+                  <p className="text-xs" style={{ color: 'var(--color-success)' }}>Redirecting to analysis page...</p>
+                </div>
+              </div>
+            )}
+
+            {uploadStatus === 'error' && (
+              <div className="flex items-center gap-2 p-4 rounded-lg" style={{ backgroundColor: 'var(--color-error-light)', border: '1px solid var(--color-error)' }}>
+                <AlertCircle className="w-5 h-5" style={{ color: 'var(--color-error)' }} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium" style={{ color: 'var(--color-error)' }}>Upload Failed</p>
+                  <p className="text-xs" style={{ color: 'var(--color-error)' }}>Please try again</p>
+                </div>
+              </div>
+            )}
+
+            {uploadStatus !== 'uploading' && uploadStatus !== 'success' && (
+              <div className="flex gap-3">
+                <Button onClick={handleUpload} className="flex-1" loading={uploading}>
+                  Upload & Analyze
+                </Button>
+                <Button variant="outline" onClick={removeFile}>
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
+
+      <Card>
+        <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--color-text-primary)' }}>What happens next?</h3>
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: 'var(--color-primary-100)' }}>
+              <span className="text-xs font-bold" style={{ color: 'var(--color-primary-600)' }}>1</span>
+            </div>
+            <div>
+              <p className="font-medium" style={{ color: 'var(--color-text-primary)' }}>AI Analysis</p>
+              <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Our AI will analyze your contract for clauses, risks, and compliance</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: 'var(--color-primary-100)' }}>
+              <span className="text-xs font-bold" style={{ color: 'var(--color-primary-600)' }}>2</span>
+            </div>
+            <div>
+              <p className="font-medium" style={{ color: 'var(--color-text-primary)' }}>Plain English Explanation</p>
+              <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Get easy-to-understand explanations of complex legal terms</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: 'var(--color-primary-100)' }}>
+              <span className="text-xs font-bold" style={{ color: 'var(--color-primary-600)' }}>3</span>
+            </div>
+            <div>
+              <p className="font-medium" style={{ color: 'var(--color-text-primary)' }}>AI Suggestions</p>
+              <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Receive recommendations to improve contract terms and reduce risks</p>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+export default UploadPage;
