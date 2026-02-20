@@ -39,12 +39,20 @@ function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-bg-gradient-start) 0%, var(--color-bg-secondary) 45%, var(--color-bg-primary) 100%)' }}>
       <Navbar />
 
-      <main>
+      <main className="relative overflow-hidden">
+        <div
+          className="pointer-events-none absolute -top-24 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full blur-3xl"
+          style={{ backgroundColor: "rgba(21, 96, 189, 0.12)" }}
+        />
+        <div
+          className="pointer-events-none absolute top-48 -left-20 h-72 w-72 rounded-full blur-3xl"
+          style={{ backgroundColor: "rgba(20, 184, 166, 0.1)" }}
+        />
         {/* Hero Section */}
-        <section className="max-w-6xl mx-auto px-6 py-24 text-center">
+        <section className="max-w-6xl mx-auto px-6 py-24 text-center relative z-10">
           <div className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium mb-6" style={{ backgroundColor: 'var(--color-accent-teal)', color: 'white' }}>
             Built for legal teams and founders
           </div>
@@ -274,3 +282,4 @@ function LandingPage() {
 }
 
 export default LandingPage;
+

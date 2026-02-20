@@ -19,8 +19,8 @@ function Navbar() {
 
   return (
     <nav
-      className="shrink-0 px-4 py-3 border-b"
-      style={{ borderColor: 'var(--color-neutral-200)', backgroundColor: 'var(--color-bg-primary)' }}
+      className="shrink-0 px-4 py-3 border-b sticky top-0 z-40 backdrop-blur-md"
+      style={{ borderColor: 'var(--color-neutral-200)', backgroundColor: 'var(--glass-bg)' }}
     >
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-3">
@@ -68,7 +68,7 @@ function Navbar() {
               <MenuItems 
                 anchor="bottom end"
                 className="mt-2 w-56 overflow-hidden rounded-md border bg-white shadow-sm focus:outline-hidden"
-                style={{ borderColor: 'var(--color-neutral-200)', backgroundColor: 'var(--color-bg-primary)' }}
+                style={{ borderColor: 'var(--color-neutral-200)', backgroundColor: 'var(--glass-bg)' }}
               >
                 <MenuItem>
                   <Link
@@ -129,3 +129,4 @@ function Navbar() {
 }
 
 export default Navbar;
+
