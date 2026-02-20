@@ -1,9 +1,15 @@
 # app/config/settings.py
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
     # Application
     APP_NAME: str = "Legalyze API"
     APP_VERSION: str = "1.0.0"
@@ -49,6 +55,8 @@ class Settings(BaseSettings):
     # AI Models (Optional)
     OPENAI_API_KEY: str = ""
     HUGGINGFACE_API_KEY: str = ""
+    CLAUSE_CLASSIFIER_MODEL_PATH: str = ""
+    CLAUSE_CLASSIFIER_MIN_CONFIDENCE: float = 0.55
     
     # File Upload
     MAX_UPLOAD_SIZE_MB: int = 25
@@ -67,11 +75,5 @@ class Settings(BaseSettings):
 
     # Firebase (Optional)
     FIREBASE_CREDENTIALS_PATH: str = ""
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-        extra = "ignore"
-
 
 settings = Settings()

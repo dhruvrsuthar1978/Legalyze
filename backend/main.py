@@ -42,7 +42,9 @@ from app.routes import (
     analysis_routes,
     suggestion_routes,
     generation_routes,
-    signature_routes
+    signature_routes,
+    admin_routes,
+    rag_routes
 )
 
 # ── Logging Setup ─────────────────────────────────────────────────
@@ -259,6 +261,18 @@ app.include_router(
     signature_routes.router,
     prefix=settings.API_PREFIX,
     tags=["Signatures"]
+)
+
+app.include_router(
+    admin_routes.router,
+    prefix=settings.API_PREFIX,
+    tags=["Admin"]
+)
+
+app.include_router(
+    rag_routes.router,
+    prefix=settings.API_PREFIX,
+    tags=["RAG"]
 )
 
 

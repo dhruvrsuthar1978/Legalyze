@@ -5,16 +5,24 @@ import re
 import spacy
 from typing import List, Dict, Optional
 import logging
+from app.ai.clause_classifier import predict_clause_type
 
 logger = logging.getLogger("legalyze.clause")
 
 # ── Load spaCy model ───────────────────────────────────────────────
 try:
-    nlp = spacy.load("en_core_web_lg")         # Large model preferred
+    nlp = spacy.load("en_core_web_lg")  # Large model preferred
     logger.info("spaCy model 'en_core_web_lg' loaded")
 except OSError:
-    nlp = spacy.load("en_core_web_sm")         # Fallback to small
-    logger.warning("Fallback to spaCy 'en_core_web_sm'")
+    try:
+        nlp = spacy.load("en_core_web_sm")  # Fallback to small
+        logger.warning("Fallback to spaCy 'en_core_web_sm'")
+    except OSError:
+        # Final fallback so API can boot even if no spaCy model is installed.
+        nlp = spacy.blank("en")
+        if "sentencizer" not in nlp.pipe_names:
+            nlp.add_pipe("sentencizer")
+        logger.warning("No spaCy model found. Using blank 'en' pipeline with sentencizer.")
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -278,6 +286,14 @@ def _detect_clause_type(sentence: str) -> Optional[str]:
     Scores each clause type by keyword density.
     Returns the highest-scoring type or None if no match.
     """
+    model_prediction = predict_clause_type(sentence)
+    if model_prediction:
+        predicted_label, confidence = model_prediction
+        logger.debug(
+            f"Model clause classification hit | label={predicted_label}, confidence={confidence:.3f}"
+        )
+        return predicted_label
+
     sentence_lower = sentence.lower()
     scores: Dict[str, int] = {}
 

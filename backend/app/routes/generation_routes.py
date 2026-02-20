@@ -12,7 +12,9 @@ from app.controllers.generation_controller import (
     list_generated_versions,
     delete_generated_version,
     preview_generated_contract
-    , generate_adhoc_preview
+    , generate_adhoc_preview,
+    list_contract_templates,
+    preview_template_contract
 )
 from app.models.contract_model import (
     GeneratedContractResponse,
@@ -128,6 +130,31 @@ async def adhoc_preview(
     current_user: dict = Depends(require_legal_user)
 ):
     return await generate_adhoc_preview(payload, current_user)
+
+
+@router.get(
+    "/templates",
+    status_code=status.HTTP_200_OK,
+    summary="List available contract templates",
+    description="Returns supported template types and expected fields for guided contract draft generation."
+)
+async def list_templates(
+    current_user: dict = Depends(require_legal_user)
+):
+    return await list_contract_templates(current_user)
+
+
+@router.post(
+    "/templates/preview",
+    status_code=status.HTTP_200_OK,
+    summary="Preview a contract generated from template inputs",
+    description="Builds a text preview using a selected template and user-provided fields."
+)
+async def preview_from_template(
+    payload: dict,
+    current_user: dict = Depends(require_legal_user)
+):
+    return await preview_template_contract(payload, current_user)
 
 
 # ══════════════════════════════════════════════════════

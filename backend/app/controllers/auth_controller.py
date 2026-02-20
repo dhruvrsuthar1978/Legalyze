@@ -58,6 +58,16 @@ async def register_user(payload: UserRegisterRequest) -> dict:
             }
         )
     
+    # Force safe default role for public self-registration.
+    # Privileged roles (admin/lawyer) must be assigned via admin APIs.
+    assigned_role = "client"
+    requested_role = str(payload.role or "").lower().strip()
+    if requested_role and requested_role != assigned_role:
+        logger.warning(
+            f"Registration attempted with elevated/custom role, overriding | "
+            f"email={payload.email}, requested_role={requested_role}, assigned_role={assigned_role}"
+        )
+
     # Hash password
     hashed_pw = hash_password(payload.password)
     
@@ -66,7 +76,7 @@ async def register_user(payload: UserRegisterRequest) -> dict:
         "name": payload.name,
         "email": payload.email,
         "password": hashed_pw,
-        "role": str(payload.role or "user").lower(),
+        "role": assigned_role,
         "account_status": "active",
         "profile": {
             "phone": None,

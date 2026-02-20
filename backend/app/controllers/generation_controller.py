@@ -3,6 +3,10 @@
 from fastapi import HTTPException, status, BackgroundTasks
 from app.config.database import get_database
 from app.services.generation_service import generate_contract_document
+from app.services.contract_template_service import (
+    list_templates,
+    render_template_preview
+)
 from app.services.storage_service import (
     upload_to_cloud,
     get_download_url,
@@ -301,6 +305,39 @@ async def generate_adhoc_preview(payload: dict, current_user: dict) -> dict:
         raise Exception(f"Adhoc generation preview failed: {e}")
 
 
+async def list_contract_templates(current_user: dict) -> dict:
+    """Return supported contract templates for guided draft generation."""
+    return {"templates": list_templates()}
+
+
+async def preview_template_contract(payload: dict, current_user: dict) -> dict:
+    """
+    Build a template-based contract preview from structured user fields.
+
+    Expected payload:
+    {
+      "template_id": "...",
+      "data": { ... template fields ... }
+    }
+    """
+    template_id = payload.get("template_id")
+    data = payload.get("data", {}) or {}
+
+    if not template_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="template_id is required."
+        )
+
+    try:
+        return render_template_preview(template_id, data)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc)
+        ) from exc
+
+
 # ══════════════════════════════════════════════════════════════════
 # LIST GENERATED VERSIONS
 # ══════════════════════════════════════════════════════════════════
@@ -376,6 +413,7 @@ async def list_generated_versions(
         "total": total,
         "page": page,
         "limit": limit,
+        "total_pages": (total + limit - 1) // limit,
         "versions": version_list
     }
 
