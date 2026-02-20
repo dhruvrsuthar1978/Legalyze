@@ -19,6 +19,7 @@ function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
+    accountType: 'client',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
@@ -30,6 +31,8 @@ function RegisterPage() {
       newErrors.name = 'Full name is required';
     } else if (formData.name.length < 2) {
       newErrors.name = 'Name must be at least 2 characters';
+    } else if (!/^[a-zA-Z\s\-'.]+$/.test(formData.name)) {
+      newErrors.name = 'Name can only include letters, spaces, hyphens, apostrophes, and periods';
     }
     
     if (!formData.email) {
@@ -42,6 +45,14 @@ function RegisterPage() {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = 'Password must include at least one uppercase letter';
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = 'Password must include at least one lowercase letter';
+    } else if (!/\d/.test(formData.password)) {
+      newErrors.password = 'Password must include at least one number';
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      newErrors.password = 'Password must include at least one special character';
     }
     
     if (formData.password !== formData.confirmPassword) {
@@ -66,6 +77,7 @@ function RegisterPage() {
         email: formData.email,
         password: formData.password,
         confirm_password: formData.confirmPassword,
+        role: formData.accountType,
       });
 
       // Auto-login after registration
@@ -88,10 +100,10 @@ function RegisterPage() {
       <Card className="w-full max-w-md" glass>
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-linear-to-br from-(--color-primary-600) to-(--color-accent-blue) rounded-2xl flex items-center justify-center shadow-xl">
+            <div className="w-12 h-12 rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-600)' }}>
               <span className="text-white font-bold text-2xl">L</span>
             </div>
-            <span className="text-3xl font-bold gradient-text">Legalyze</span>
+            <span className="text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Legalyze</span>
           </div>
           <h1 className="text-3xl font-bold mb-3">Create Account</h1>
           <p className="text-lg" style={{ color: 'var(--color-neutral-600)' }}>Get started with Legalyze today</p>
@@ -117,6 +129,22 @@ function RegisterPage() {
             placeholder="you@example.com"
             autoComplete="email"
           />
+
+          <div>
+            <label className="label-text mb-2 block">Account Type</label>
+            <select
+              value={formData.accountType}
+              onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
+              className="w-full px-4 py-3 rounded-xl border border-[var(--color-neutral-300)] bg-white"
+            >
+              <option value="client">Client (Self-register)</option>
+              <option value="lawyer" disabled>Lawyer (Assigned by admin)</option>
+              <option value="admin" disabled>Admin (Assigned by admin)</option>
+            </select>
+            <p className="text-xs mt-2" style={{ color: 'var(--color-neutral-500)' }}>
+              New accounts are created as Client. Lawyer/Admin roles are granted by admin only.
+            </p>
+          </div>
 
           <div className="relative">
             <Input

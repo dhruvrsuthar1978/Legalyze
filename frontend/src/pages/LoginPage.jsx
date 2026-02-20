@@ -68,21 +68,17 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 aurora-bg relative overflow-hidden">
-      {/* Decorative blobs */}
-      <div className="absolute top-20 left-20 w-96 h-96 rounded-full filter blur-3xl opacity-20 animate-blob" style={{ background: 'var(--color-primary-400)' }}></div>
-      <div className="absolute bottom-20 right-20 w-96 h-96 rounded-full filter blur-3xl opacity-15 animate-blob animation-delay-4000" style={{ background: 'var(--color-accent-purple)' }}></div>
-      
-      <Card className="w-full max-w-md relative z-10" glass>
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-14 h-14 bg-linear-to-br from-(--color-primary-600) to-(--color-accent-blue) rounded-2xl flex items-center justify-center shadow-2xl animate-pulse-scale">
+    <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+      <Card className="w-full max-w-md" glass>
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-600)' }}>
               <span className="text-white font-bold text-2xl">L</span>
             </div>
-            <span className="text-3xl font-bold gradient-text-animated">Legalyze</span>
+            <span className="text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>Legalyze</span>
           </div>
-          <h1 className="text-4xl font-bold mb-4">Welcome Back</h1>
-          <p className="text-lg" style={{ color: 'var(--color-text-tertiary)' }}>Sign in to continue to your dashboard</p>
+          <h1 className="text-3xl font-bold mb-3">Welcome Back</h1>
+          <p className="text-base" style={{ color: 'var(--color-text-tertiary)' }}>Sign in to continue to your dashboard</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -105,11 +101,14 @@ function LoginPage() {
               error={errors.password}
               placeholder="Enter your password"
               autoComplete="current-password"
+              className="pr-12"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-[2.75rem] text-gray-400 hover:text-gray-600 transition-colors"
+              style={{ color: 'var(--color-neutral-500)' }}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
@@ -117,7 +116,7 @@ function LoginPage() {
 
           <div className="flex items-center justify-between text-sm">
             <label className="flex items-center gap-2 cursor-pointer group">
-              <input type="checkbox" className="rounded-md border-2 w-4 h-4 smooth-transition" style={{ borderColor: 'var(--color-neutral-300)' }} />
+              <input type="checkbox" className="rounded border w-4 h-4 smooth-transition" style={{ borderColor: 'var(--color-neutral-300)' }} />
               <span style={{ color: 'var(--color-neutral-600)' }} className="group-hover:text-neutral-900 smooth-transition">Remember me</span>
             </label>
             <Link to="/forgot-password" className="font-medium smooth-transition" style={{ color: 'var(--color-primary-600)' }}>

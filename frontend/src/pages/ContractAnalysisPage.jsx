@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { ChevronDown, Check, X } from 'lucide-react';
+import { useDispatch } from 'react-redux';
 import { analysisService } from '../services/analysisService';
 import { contractService } from '../services/contractService';
+import { suggestionService } from '../services/suggestionService';
+import { showToast } from '../store/uiSlice';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 
 function ContractAnalysisPage() {
   const { id } = useParams();
+  const dispatch = useDispatch();
   const [expandedClause, setExpandedClause] = useState(null);
   const [contract, setContract] = useState(null);
   const [clauses, setClauses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [actionLoading, setActionLoading] = useState({});
 
   useEffect(() => {
     const fetchContractData = async () => {
@@ -52,6 +57,7 @@ function ContractAnalysisPage() {
           plainEnglish: clause.simplified_text || 'Processing...',
           riskReason: clause.risk_reason || 'Analysis in progress...',
           suggestion: clause.suggestion || 'Generating suggestions...',
+          suggestionStatus: clause.suggestion_status || 'pending',
         })));
 
       } catch (err) {
@@ -65,6 +71,46 @@ function ContractAnalysisPage() {
       fetchContractData();
     }
   }, [id]);
+
+  const updateClauseStatus = (clauseId, status) => {
+    setClauses(prev =>
+      prev.map(clause =>
+        clause.id === clauseId ? { ...clause, suggestionStatus: status } : clause
+      )
+    );
+  };
+
+  const handleSuggestionAction = async (clauseId, action) => {
+    try {
+      setActionLoading(prev => ({ ...prev, [clauseId]: action }));
+
+      if (action === 'accept') {
+        await suggestionService.acceptSuggestion(id, clauseId);
+        updateClauseStatus(clauseId, 'accepted');
+        dispatch(showToast({
+          type: 'success',
+          title: 'Suggestion Accepted',
+          message: 'This suggestion will be used during contract generation.',
+        }));
+      } else {
+        await suggestionService.rejectSuggestion(id, clauseId);
+        updateClauseStatus(clauseId, 'rejected');
+        dispatch(showToast({
+          type: 'success',
+          title: 'Suggestion Rejected',
+          message: 'Original clause will be retained.',
+        }));
+      }
+    } catch (err) {
+      dispatch(showToast({
+        type: 'error',
+        title: 'Action Failed',
+        message: err.response?.data?.detail || err.message || 'Could not update suggestion status.',
+      }));
+    } finally {
+      setActionLoading(prev => ({ ...prev, [clauseId]: null }));
+    }
+  };
 
   if (loading) {
     return (
@@ -208,16 +254,42 @@ function ContractAnalysisPage() {
 
                       {/* AI Suggestion */}
                       <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-                        <h3 className="text-sm font-semibold text-indigo-900 mb-2 uppercase tracking-wide">
-                          AI Suggestion
-                        </h3>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-sm font-semibold text-indigo-900 uppercase tracking-wide">
+                            AI Suggestion
+                          </h3>
+                          <Badge
+                            variant={
+                              clause.suggestionStatus === 'accepted'
+                                ? 'success'
+                                : clause.suggestionStatus === 'rejected'
+                                  ? 'error'
+                                  : 'warning'
+                            }
+                          >
+                            {clause.suggestionStatus}
+                          </Badge>
+                        </div>
                         <p className="text-indigo-800 leading-relaxed mb-4">{clause.suggestion}</p>
                         <div className="flex gap-2">
-                          <Button size="sm" className="gap-2">
+                          <Button
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => handleSuggestionAction(clause.id, 'accept')}
+                            loading={actionLoading[clause.id] === 'accept'}
+                            disabled={clause.suggestionStatus === 'accepted'}
+                          >
                             <Check className="w-4 h-4" style={{ color: 'white' }} />
                             Accept Suggestion
                           </Button>
-                          <Button size="sm" variant="outline" className="gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => handleSuggestionAction(clause.id, 'reject')}
+                            loading={actionLoading[clause.id] === 'reject'}
+                            disabled={clause.suggestionStatus === 'rejected'}
+                          >
                             <X className="w-4 h-4" style={{ color: '#4b5563' }} />
                             Reject
                           </Button>

@@ -10,6 +10,7 @@ import Badge from '../components/ui/Badge';
 
 function Dashboard() {
   const { user } = useSelector((state) => state.auth);
+  const role = (user?.role || 'user').toLowerCase();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [contracts, setContracts] = useState([]);
@@ -69,7 +70,13 @@ function Dashboard() {
           Welcome back, {user?.name || 'User'}!
         </h1>
         <p className="text-xl" style={{ color: 'var(--color-text-tertiary)' }}>
-          Here&apos;s your latest contract activity.
+          {role === 'admin'
+            ? 'System-level overview and governance insights.'
+            : role === 'lawyer'
+              ? 'Review risk-heavy contracts and improve legal balance.'
+              : role === 'client'
+                ? 'Track your contracts and follow signing/generation updates.'
+                : "Here&apos;s your latest contract activity."}
         </p>
       </div>
 
@@ -82,11 +89,11 @@ function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {statCards.map((stat) => {
               const Icon = stat.icon;
-              const gradients = {
-                blue: 'from-[var(--color-primary-500)] to-[var(--color-accent-blue)]',
-                red: 'from-red-500 to-red-600',
-                yellow: 'from-amber-500 to-orange-600',
-                green: 'from-emerald-500 to-green-600',
+              const backgrounds = {
+                blue: 'var(--color-primary-600)',
+                red: '#DC2626',
+                yellow: '#D97706',
+                green: '#059669',
               };
 
               return (
@@ -96,7 +103,7 @@ function Dashboard() {
                       <p className="label-text mb-3 uppercase tracking-wider">{stat.label}</p>
                       <p className="text-4xl font-bold">{stat.value}</p>
                     </div>
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-linear-to-br ${gradients[stat.color]}`}>
+                    <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: backgrounds[stat.color] }}>
                       <Icon className="w-8 h-8" style={{ color: 'white' }} />
                     </div>
                   </div>

@@ -15,6 +15,7 @@ const initialState = {
   toast: null,
   modal: null,
   sidebarOpen: true,
+  sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
   theme: getInitialTheme(),
 };
 
@@ -40,6 +41,14 @@ const uiSlice = createSlice({
     setSidebarOpen: (state, action) => {
       state.sidebarOpen = action.payload;
     },
+    toggleSidebarCollapsed: (state) => {
+      state.sidebarCollapsed = !state.sidebarCollapsed;
+      localStorage.setItem('sidebarCollapsed', String(state.sidebarCollapsed));
+    },
+    setSidebarCollapsed: (state, action) => {
+      state.sidebarCollapsed = action.payload;
+      localStorage.setItem('sidebarCollapsed', String(action.payload));
+    },
     toggleTheme: (state) => {
       state.theme = state.theme === 'light' ? 'dark' : 'light';
       localStorage.setItem('theme', state.theme);
@@ -60,6 +69,8 @@ export const {
   hideModal,
   toggleSidebar,
   setSidebarOpen,
+  toggleSidebarCollapsed,
+  setSidebarCollapsed,
   toggleTheme,
   setTheme,
 } = uiSlice.actions;

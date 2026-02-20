@@ -1,8 +1,22 @@
-const { test, expect } = require('@playwright/test');
-const path = require('path');
+import { test, expect } from '@playwright/test';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 test('upload flow shows progress and navigates to contract page', async ({ page }) => {
-  // Intercept upload POST and return fake contract id
+  await page.route('**/api/auth/me', route => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ id: 'u1', name: 'E2E User', email: 'e2e@example.com', role: 'user' })
+    });
+  });
+
+  await page.goto('/');
+  await page.evaluate(() => localStorage.setItem('token', 'e2e-token'));
+
   await page.route('**/api/contracts/upload', route => {
     route.fulfill({
       status: 201,
@@ -11,28 +25,35 @@ test('upload flow shows progress and navigates to contract page', async ({ page 
     });
   });
 
-  // Intercept status polling to simulate processing -> completed
-  let pollCount = 0;
-  await page.route('**/api/contracts/*/status', route => {
-    pollCount += 1;
-    const body = pollCount < 2
-      ? { status: 'processing', progress: 30 }
-      : { status: 'completed', progress: 100 };
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+  await page.route('**/api/analysis/fake-contract-123/run?mode=async', route => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ status: 'started' })
+    });
   });
 
-  await page.goto('/');
-  await page.click('text=Upload Contract');
+  let pollCount = 0;
+  await page.route('**/api/contracts/fake-contract-123', route => {
+    pollCount += 1;
+    const body = pollCount < 2
+      ? { id: 'fake-contract-123', analysis_status: 'processing' }
+      : { id: 'fake-contract-123', analysis_status: 'completed' };
 
-  const input = await page.$('input[type=file]#file-upload');
-  await input.setInputFiles(path.join(__dirname, '..', 'fixtures', 'sample.pdf'));
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(body)
+    });
+  });
 
-  await page.click('text=Upload & Analyze');
+  await page.goto('/upload');
+  await expect(page).toHaveURL(/\/upload/);
 
-  // Expect progress bar to show
-  await expect(page.locator('text=Uploading...')).toBeVisible();
+  await page.setInputFiles('input#file-upload', path.join(__dirname, '..', 'fixtures', 'sample.pdf'));
+  await page.getByRole('button', { name: 'Upload & Analyze' }).click();
 
-  // Wait for navigation to contract page (simulated)
-  await page.waitForURL('**/contract/fake-contract-123', { timeout: 10000 });
+  await expect(page.getByText(/Uploading\.\.\.|Analyzing\.\.\./).first()).toBeVisible();
+  await page.waitForURL('**/contract/fake-contract-123', { timeout: 15000 });
   await expect(page).toHaveURL(/contract\/fake-contract-123/);
 });

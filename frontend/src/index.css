@@ -154,7 +154,14 @@
     background: var(--color-bg-primary);
     color: var(--color-text-primary);
     line-height: 1.7;
+    caret-color: transparent;
     transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  input,
+  textarea,
+  [contenteditable="true"] {
+    caret-color: auto;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -165,133 +172,55 @@
     color: var(--color-text-primary);
   }
 
-  h1 { font-size: 3.5rem; font-weight: 800; }
-  h2 { font-size: 2.5rem; font-weight: 700; }
-  h3 { font-size: 1.75rem; font-weight: 700; }
+  h1 { font-size: 2.5rem; font-weight: 700; }
+  h2 { font-size: 2rem; font-weight: 700; }
+  h3 { font-size: 1.5rem; font-weight: 700; }
   h4 { font-size: 1.375rem; font-weight: 600; }
   h5 { font-size: 1.125rem; font-weight: 600; }
   h6 { font-size: 1rem; font-weight: 600; }
 }
 
 @layer utilities {
-  /* Glass Card Effect */
   .glass-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: var(--border-thin) solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
+    background: var(--color-bg-primary);
+    border: var(--border-thin) solid var(--color-neutral-200);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-md);
   }
 
-  /* Floating Island Effect */
   .floating-island {
     background: var(--color-bg-primary);
     border: var(--border-thin) solid var(--color-neutral-200);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-    border-radius: var(--radius-xl);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-md);
   }
 
-  .floating-island:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-  }
-
-  /* Bento Grid Item */
   .bento-item {
     background: var(--color-bg-primary);
     border: var(--border-thin) solid var(--color-neutral-200);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-md);
     padding: var(--spacing-xl);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .bento-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--color-primary-500), var(--color-accent-blue));
-    transform: scaleX(0);
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .bento-item:hover::before {
-    transform: scaleX(1);
+    box-shadow: var(--shadow-sm);
   }
 
   .bento-item:hover {
-    border-color: var(--color-primary-400);
-    box-shadow: 0 12px 24px -4px rgba(21, 96, 189, 0.15), 0 8px 16px -4px rgba(21, 96, 189, 0.1);
-    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
   }
 
-  /* Aurora Gradient Background */
   .aurora-bg {
-    position: relative;
-    background: linear-gradient(135deg, var(--color-bg-gradient-start) 0%, var(--color-bg-gradient-end) 100%);
+    background: var(--color-bg-secondary);
   }
 
-  .aurora-bg::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 20% 50%, rgba(21, 96, 189, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 80%, rgba(20, 184, 166, 0.1) 0%, transparent 50%);
-    animation: aurora 20s ease infinite;
-  }
-
-  @keyframes aurora {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-  }
-
-  /* Mesh Gradient Background */
   .mesh-gradient {
-    background: 
-      radial-gradient(at 0% 0%, rgba(21, 96, 189, 0.15) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(20, 184, 166, 0.1) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, rgba(249, 115, 22, 0.08) 0px, transparent 50%),
-      var(--color-bg-primary);
-  }
-
-  /* Shimmer Effect */
-  .shimmer {
-    position: relative;
-    overflow: hidden;
+    background: var(--color-bg-secondary);
   }
 
   .shimmer::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    animation: shimmer 2s infinite;
-  }
-
-  @keyframes shimmer {
-    100% { left: 100%; }
-  }
-
-  /* Blob Animation */
-  @keyframes blob {
-    0%, 100% { transform: translate(0px, 0px) scale(1); }
-    25% { transform: translate(20px, -30px) scale(1.05); }
-    50% { transform: translate(-10px, 20px) scale(0.95); }
-    75% { transform: translate(15px, 10px) scale(1.02); }
+    content: none;
   }
 
   .animate-blob {
-    animation: blob 10s ease-in-out infinite;
+    animation: none;
   }
 
   .animation-delay-2000 {
@@ -306,59 +235,20 @@
     animation-delay: 6s;
   }
 
-  /* Float Animation */
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
-  }
-
   .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  /* Glow Effect */
-  .glow {
-    position: relative;
+    animation: none;
   }
 
   .glow::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    border-radius: inherit;
-    background: linear-gradient(45deg, var(--color-primary-500), var(--color-accent-blue), var(--color-accent-purple));
-    opacity: 0;
-    filter: blur(20px);
-    transition: opacity 0.5s;
-    z-index: -1;
+    content: none;
   }
 
-  .glow:hover::before {
-    opacity: 0.4;
-  }
-
-  /* Card Hover Effect */
   .card-3d {
-    transform-style: preserve-3d;
-    perspective: 1000px;
+    transform: none;
   }
 
-  .card-3d:hover {
-    transform: rotateX(2deg) rotateY(-2deg) scale(1.02);
-  }
-
-  /* Gradient Text */
   .gradient-text-animated {
-    background: linear-gradient(90deg, var(--color-primary-600), var(--color-accent-blue), var(--color-accent-purple), var(--color-accent-blue), var(--color-primary-600));
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradient-shift 3s linear infinite;
-  }
-
-  @keyframes gradient-shift {
-    to { background-position: 200% center; }
+    color: var(--color-primary-600);
   }
 
   /* Risk Badge Utilities */
@@ -404,16 +294,11 @@
     color: var(--color-neutral-500);
   }
 
-  /* Gradient Text */
   .gradient-text {
-    background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-accent-blue) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--color-primary-600);
   }
 
-  /* Smooth Transitions */
   .smooth-transition {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
   }
 }

@@ -27,28 +27,28 @@ function Toast() {
 
   const styles = {
     success: {
-      bg: 'bg-gradient-to-r from-emerald-50 to-green-50',
+      bg: 'bg-emerald-50',
       border: 'border-emerald-300',
       text: 'text-emerald-900',
       iconBg: 'bg-emerald-100',
       iconColor: 'var(--color-success)',
     },
     error: {
-      bg: 'bg-gradient-to-r from-red-50 to-rose-50',
+      bg: 'bg-red-50',
       border: 'border-red-300',
       text: 'text-red-900',
       iconBg: 'bg-red-100',
       iconColor: 'var(--color-error)',
     },
     warning: {
-      bg: 'bg-gradient-to-r from-amber-50 to-orange-50',
+      bg: 'bg-amber-50',
       border: 'border-amber-300',
       text: 'text-amber-900',
       iconBg: 'bg-amber-100',
       iconColor: 'var(--color-warning)',
     },
     info: {
-      bg: 'bg-gradient-to-r from-blue-50 to-sky-50',
+      bg: 'bg-blue-50',
       border: 'border-blue-300',
       text: 'text-blue-900',
       iconBg: 'bg-blue-100',

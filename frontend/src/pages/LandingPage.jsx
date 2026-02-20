@@ -1,282 +1,272 @@
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Search, FileCheck, PenTool, Upload, ArrowRight, Sparkles, Zap, TrendingUp, CheckCircle2, Star } from 'lucide-react';
+import { ShieldCheck, Search, FileCheck, PenTool, ArrowRight, Clock, CheckCircle, Workflow } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 
 function LandingPage() {
+  const useCases = ['NDA', 'Employment', 'Vendor', 'Service Agreement'];
+
   const features = [
     {
       icon: Search,
       title: 'Clause Extraction',
-      description: 'Automatically identify and extract key clauses from legal contracts with AI precision.',
+      description: 'Automatically identify and extract key clauses from legal contracts.',
     },
     {
       icon: ShieldCheck,
       title: 'Risk Detection',
-      description: 'Detect potential risks and vulnerabilities in your contracts before signing.',
+      description: 'Detect potential risks and vulnerabilities before signing.',
     },
     {
       icon: FileCheck,
       title: 'AI Suggestions',
-      description: 'Get intelligent recommendations to improve contract terms and reduce liability.',
+      description: 'Get recommendations to improve terms and reduce liability.',
     },
     {
       icon: PenTool,
       title: 'Digital Signatures',
-      description: 'Securely sign contracts digitally with legally binding electronic signatures.',
+      description: 'Sign contracts digitally with a simple end-to-end workflow.',
     },
   ];
 
   const steps = [
-    { number: '01', title: 'Upload Contract', description: 'Upload your PDF or DOCX contract document' },
-    { number: '02', title: 'AI Analysis', description: 'Our AI analyzes clauses, risks, and compliance' },
-    { number: '03', title: 'Review Results', description: 'Get plain English explanations and suggestions' },
-    { number: '04', title: 'Take Action', description: 'Accept suggestions or generate balanced contracts' },
+    { number: '1', title: 'Upload Contract', description: 'Upload your PDF or DOCX document.' },
+    { number: '2', title: 'Run Analysis', description: 'AI reviews clauses, risks, and compliance points.' },
+    { number: '3', title: 'Review Results', description: 'Read summaries and suggestions in plain English.' },
+    { number: '4', title: 'Take Action', description: 'Approve edits, compare versions, or move to signature.' },
   ];
 
   return (
-    <div className="min-h-screen overflow-hidden">
-      <div className="aurora-bg min-h-screen">
-        <Navbar />
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+      <Navbar />
 
-        {/* Hero Section - Floating UI Cards */}
-        <section className="relative max-w-7xl mx-auto px-6 pt-20 pb-32">
-          {/* Animated gradient orbs */}
-          <div className="absolute top-20 left-10 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" style={{ background: 'var(--color-primary-400)' }}></div>
-          <div className="absolute top-40 right-10 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob animation-delay-2000" style={{ background: 'var(--color-accent-purple)' }}></div>
-          <div className="absolute bottom-0 left-1/2 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob animation-delay-4000" style={{ background: 'var(--color-accent-teal)' }}></div>
+      <main>
+        {/* Hero Section */}
+        <section className="max-w-6xl mx-auto px-6 py-24 text-center">
+          <div className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium mb-6" style={{ backgroundColor: 'var(--color-accent-teal)', color: 'white' }}>
+            Built for legal teams and founders
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
+            Simple AI Contract Review
+          </h1>
+          <p className="text-xl max-w-2xl mx-auto mb-12" style={{ color: 'var(--color-text-tertiary)' }}>
+            Analyze contracts, detect risks, and get practical suggestions in one place.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-20">
+            <Link to="/register">
+              <Button size="lg" className="px-8 py-4 text-base">Get Started</Button>
+            </Link>
+            <Link to="/upload">
+              <Button size="lg" variant="outline" className="px-8 py-4 text-base">Upload Contract</Button>
+            </Link>
+          </div>
 
-          <div className="relative z-10 text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(16px)', border: '1px solid var(--glass-border)' }}>
-              <Sparkles className="w-4 h-4" style={{ color: 'var(--color-accent-blue)' }} />
-              <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Powered by GPT-4 AI</span>
-            </div>
-
-            {/* Headline */}
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 max-w-5xl mx-auto leading-tight">
-              Legal Contract Analysis,
-              <br />
-              <span className="gradient-text-animated inline-block mt-2">
-                Powered by AI
-              </span>
-            </h1>
-
-            {/* Subheadline */}
-            <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
-              Extract clauses, detect risks, and generate balanced contracts in seconds. 
-              <br className="hidden md:block" />
-              Enterprise-grade AI trusted by legal professionals.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-20">
-              <Link to="/register">
-                <Button size="xl" className="gap-3 shadow-2xl glow group">
-                  Start Analyzing Free
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" style={{ color: 'white' }} />
-                </Button>
-              </Link>
-              <Link to="/upload">
-                <Button size="xl" variant="outline" className="gap-3 backdrop-blur-sm">
-                  <Upload className="w-5 h-5" style={{ color: 'var(--color-primary-600)' }} />
-                  Upload Contract
-                </Button>
-              </Link>
-            </div>
-
-            {/* Floating UI Cards */}
-            <div className="relative max-w-6xl mx-auto">
-              {/* Main preview */}
-              <div className="glass-card rounded-3xl p-8 shadow-2xl animate-float">
-                <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-bg-secondary)' }}>
-                  <div className="flex items-center gap-2 px-6 py-4" style={{ borderBottom: '1px solid var(--color-neutral-200)' }}>
-                    <div className="w-3 h-3 rounded-full" style={{ background: '#EF4444' }}></div>
-                    <div className="w-3 h-3 rounded-full" style={{ background: '#F59E0B' }}></div>
-                    <div className="w-3 h-3 rounded-full" style={{ background: '#10B981' }}></div>
-                  </div>
-                  <div className="p-8 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>Employment Agreement</h3>
-                        <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Analyzed in 12 seconds</p>
-                      </div>
-                      <div className="px-4 py-2 rounded-full" style={{ background: 'var(--color-success-light)', color: 'var(--color-success)' }}>
-                        <span className="text-sm font-bold">Low Risk</span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      {[
-                        { label: 'Clauses', value: '24' },
-                        { label: 'AI Score', value: '94%' },
-                        { label: 'Risks', value: '2' }
-                      ].map((stat, i) => (
-                        <div key={i} className="p-4 rounded-xl text-center" style={{ background: 'var(--color-bg-tertiary)' }}>
-                          <div className="text-3xl font-bold mb-1" style={{ color: 'var(--color-primary-600)' }}>{stat.value}</div>
-                          <div className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>{stat.label}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+          {/* Feature Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <Card className="p-8 text-left" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
+              <div className="flex items-center gap-3 mb-3">
+                <Clock className="w-5 h-5" style={{ color: 'var(--color-accent-sky)' }} />
+                <p className="text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                  Average analysis time
+                </p>
               </div>
-
-              {/* Floating cards */}
-              <div className="hidden lg:block absolute -top-8 -left-12 glass-card rounded-2xl p-4 shadow-xl animate-float animation-delay-2000" style={{ width: '200px' }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-success-light)' }}>
-                    <CheckCircle2 className="w-6 h-6" style={{ color: 'var(--color-success)' }} />
-                  </div>
-                  <span className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>AI Verified</span>
-                </div>
-                <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>All clauses reviewed for compliance</p>
+              <p className="text-3xl font-bold">Under 20s</p>
+            </Card>
+            <Card className="p-8 text-left" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
+              <div className="flex items-center gap-3 mb-3">
+                <CheckCircle className="w-5 h-5" style={{ color: 'var(--color-accent-sky)' }} />
+                <p className="text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                  Plain-English summaries
+                </p>
               </div>
-
-              <div className="hidden lg:block absolute -top-16 -right-12 glass-card rounded-2xl p-4 shadow-xl animate-float animation-delay-4000" style={{ width: '220px' }}>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-primary-100)' }}>
-                    <Zap className="w-6 h-6" style={{ color: 'var(--color-primary-600)' }} />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>12s</div>
-                    <div className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>Analysis time</div>
-                  </div>
-                </div>
+              <p className="text-3xl font-bold">Actionable</p>
+            </Card>
+            <Card className="p-8 text-left" style={{ backgroundColor: 'var(--color-bg-primary)' }}>
+              <div className="flex items-center gap-3 mb-3">
+                <Workflow className="w-5 h-5" style={{ color: 'var(--color-accent-sky)' }} />
+                <p className="text-sm font-medium" style={{ color: 'var(--color-text-tertiary)' }}>
+                  From review to signature
+                </p>
               </div>
-
-              <div className="hidden lg:block absolute -bottom-4 -right-16 glass-card rounded-2xl p-4 shadow-xl animate-float animation-delay-6000" style={{ width: '180px' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  {[1,2,3,4,5].map((i) => (
-                    <Star key={i} className="w-4 h-4 fill-current" style={{ color: '#F59E0B' }} />
-                  ))}
-                </div>
-                <p className="text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>5,000+ happy clients</p>
-              </div>
-            </div>
+              <p className="text-3xl font-bold">One workflow</p>
+            </Card>
           </div>
         </section>
 
-        {/* Features - Bento Grid */}
-        <section className="max-w-7xl mx-auto px-6 py-32">
-          <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-6xl font-bold mb-6">
-              Everything you need
-              <br />
-              <span className="gradient-text-animated">in one platform</span>
-            </h2>
-            <p className="text-xl max-w-2xl mx-auto" style={{ color: 'var(--color-text-tertiary)' }}>
-              Analyze, generate, and manage legal contracts with AI-powered precision
-            </p>
+        {/* Use Cases Section */}
+        <section className="max-w-6xl mx-auto px-6 pb-16">
+          <div className="flex flex-wrap justify-center gap-2 mb-12">
+            {useCases.map((item) => (
+              <span
+                key={item}
+                className="px-4 py-2 text-sm font-medium rounded-full border"
+                style={{ borderColor: 'var(--color-neutral-300)', color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-bg-primary)' }}
+              >
+                {item}
+              </span>
+            ))}
           </div>
 
-          {/* Bento Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => {
+          <Card className="max-w-4xl mx-auto p-6 text-left">
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <p className="text-lg font-semibold">Live analysis preview</p>
+              <span className="text-xs px-3 py-1.5 rounded-full font-medium" style={{ backgroundColor: 'var(--color-success-light)', color: 'var(--color-success)' }}>
+                Completed
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+                <p className="text-xs mb-2 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>Document</p>
+                <p className="font-semibold">MSA_2026.pdf</p>
+              </div>
+              <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+                <p className="text-xs mb-2 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>Clauses extracted</p>
+                <p className="font-semibold">28 clauses</p>
+              </div>
+              <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+                <p className="text-xs mb-2 font-medium" style={{ color: 'var(--color-text-tertiary)' }}>Risk level</p>
+                <p className="font-semibold">Medium (3 items)</p>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        <section className="max-w-6xl mx-auto px-6 pb-16">
+          <h2 className="text-3xl font-bold mb-8 text-center">Core Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {features.map((feature) => {
               const Icon = feature.icon;
-              const sizes = ['lg:col-span-2 lg:row-span-2', '', '', 'lg:col-span-2'];
               return (
-                <div key={index} className={`bento-item group cursor-pointer card-3d ${sizes[index] || ''}`}>
-                  <div className="flex flex-col h-full">
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300" style={{ background: 'linear-gradient(135deg, var(--color-primary-100), var(--color-primary-200))' }}>
-                      <Icon className="w-7 h-7" style={{ color: 'var(--color-primary-600)' }} />
+                <Card key={feature.title} className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-100)' }}>
+                      <Icon className="w-5 h-5" style={{ color: 'var(--color-primary-600)' }} />
                     </div>
-                    <h3 className="text-2xl font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>{feature.title}</h3>
-                    <p className="text-lg leading-relaxed" style={{ color: 'var(--color-text-tertiary)' }}>
-                      {feature.description}
-                    </p>
-                    {index === 0 && (
-                      <div className="mt-auto pt-6">
-                        <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--color-primary-600)' }}>
-                          Learn more
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      </div>
-                    )}
+                    <div>
+                      <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                      <p style={{ color: 'var(--color-text-tertiary)' }}>{feature.description}</p>
+                    </div>
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
         </section>
 
-        {/* How It Works - Timeline */}
-        <section className="max-w-6xl mx-auto px-6 py-32">
-          <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-6xl font-bold mb-6">
-              From upload to insights
-              <br />
-              <span className="gradient-text-animated">in seconds</span>
-            </h2>
-          </div>
-
-          <div className="relative">
-            {/* Timeline line */}
-            <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-0.5 -translate-x-1/2" style={{ background: 'linear-gradient(to bottom, var(--color-primary-300), var(--color-primary-100))' }}></div>
-
-            <div className="space-y-16">
-              {steps.map((step, index) => (
-                <div key={index} className={`flex flex-col lg:flex-row gap-8 items-center ${index % 2 === 1 ? 'lg:flex-row-reverse' : ''}`}>
-                  <div className="flex-1">
-                    <div className="bento-item text-left">
-                      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 text-3xl font-bold text-white" style={{ background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-accent-blue))' }}>
-                        {step.number}
-                      </div>
-                      <h3 className="text-2xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>{step.title}</h3>
-                      <p className="text-lg leading-relaxed" style={{ color: 'var(--color-text-tertiary)' }}>
-                        {step.description}
-                      </p>
-                    </div>
+        <section className="max-w-6xl mx-auto px-6 pb-20">
+          <h2 className="text-3xl font-bold mb-8 text-center">How It Works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {steps.map((step) => (
+              <Card key={step.number} className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-9 h-9 rounded-md flex items-center justify-center text-white font-semibold" style={{ backgroundColor: 'var(--color-primary-600)' }}>
+                    {step.number}
                   </div>
-                  <div className="hidden lg:block w-20 h-20 rounded-full shrink-0" style={{ background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-accent-blue))', boxShadow: '0 0 0 4px var(--color-bg-primary)' }}></div>
-                  <div className="flex-1"></div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">{step.title}</h3>
+                    <p style={{ color: 'var(--color-text-tertiary)' }}>{step.description}</p>
+                  </div>
                 </div>
-              ))}
-            </div>
+              </Card>
+            ))}
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="max-w-5xl mx-auto px-6 py-32">
-          <div className="mesh-gradient rounded-3xl p-12 md:p-20 text-center relative overflow-hidden">
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-64 h-64 rounded-full filter blur-3xl opacity-20" style={{ background: 'var(--color-accent-purple)' }}></div>
-            <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full filter blur-3xl opacity-20" style={{ background: 'var(--color-accent-teal)' }}></div>
-            
-            <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(16px)', border: '1px solid var(--glass-border)' }}>
-                <TrendingUp className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
-                <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Join 5,000+ legal professionals</span>
+        <section className="max-w-6xl mx-auto px-6 pb-16">
+          <h2 className="text-3xl font-bold mb-8 text-center">Trusted by Legal Teams</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-100)' }}>
+                  <span className="text-xl font-bold" style={{ color: 'var(--color-primary-600)' }}>JD</span>
+                </div>
+                <div>
+                  <p className="mb-3" style={{ color: 'var(--color-text-tertiary)' }}>
+                    "Legalyze cut our contract review time by 60%. The AI suggestions are incredibly accurate and save us hours of manual work."
+                  </p>
+                  <p className="font-semibold">Jane Doe</p>
+                  <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>General Counsel, TechCorp</p>
+                </div>
               </div>
-              
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 max-w-3xl mx-auto">
-                Ready to transform your
-                <br />
-                contract analysis workflow?
-              </h2>
-              
-              <p className="text-xl mb-10 max-w-2xl mx-auto" style={{ color: 'var(--color-text-secondary)' }}>
-                Start analyzing contracts with AI today. No credit card required.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/register">
-                  <Button size="xl" className="shadow-2xl glow group">
-                    Get Started Free
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" style={{ color: 'white' }} />
-                  </Button>
-                </Link>
-                <Link to="/upload">
-                  <Button size="xl" variant="outline" className="backdrop-blur-sm">
-                    Try Demo
-                  </Button>
-                </Link>
+            </Card>
+            <Card className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-100)' }}>
+                  <span className="text-xl font-bold" style={{ color: 'var(--color-primary-600)' }}>MS</span>
+                </div>
+                <div>
+                  <p className="mb-3" style={{ color: 'var(--color-text-tertiary)' }}>
+                    "As a startup founder, I needed a fast way to review vendor agreements. Legalyze gives me confidence without the legal fees."
+                  </p>
+                  <p className="font-semibold">Michael Smith</p>
+                  <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>CEO, StartupHub</p>
+                </div>
               </div>
-            </div>
+            </Card>
+            <Card className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-100)' }}>
+                  <span className="text-xl font-bold" style={{ color: 'var(--color-primary-600)' }}>RL</span>
+                </div>
+                <div>
+                  <p className="mb-3" style={{ color: 'var(--color-text-tertiary)' }}>
+                    "The risk detection feature helped us identify problematic clauses we would have missed. It's like having an extra lawyer on the team."
+                  </p>
+                  <p className="font-semibold">Rebecca Lee</p>
+                  <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>Legal Director, FinanceFlow</p>
+                </div>
+              </div>
+            </Card>
           </div>
         </section>
-      </div>
+
+        <section className="max-w-6xl mx-auto px-6 pb-16">
+          <h2 className="text-3xl font-bold mb-8 text-center">Frequently Asked Questions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-2">How accurate is the AI analysis?</h3>
+              <p style={{ color: 'var(--color-text-tertiary)' }}>
+                Our AI is trained on millions of legal documents and achieves 95%+ accuracy in clause identification. However, we always recommend having a legal professional review critical contracts.
+              </p>
+            </Card>
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-2">Is my data secure?</h3>
+              <p style={{ color: 'var(--color-text-tertiary)' }}>
+                Absolutely. We use bank-level encryption and never share your documents. All data is stored securely and you maintain full ownership of your contracts.
+              </p>
+            </Card>
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-2">What file formats do you support?</h3>
+              <p style={{ color: 'var(--color-text-tertiary)' }}>
+                We support PDF, DOCX, and TXT files. Simply upload your contract and our system will process it automatically within seconds.
+              </p>
+            </Card>
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-2">Can I try it for free?</h3>
+              <p style={{ color: 'var(--color-text-tertiary)' }}>
+                Yes! Create a free account and analyze your first 3 contracts at no cost. No credit card required to get started.
+              </p>
+            </Card>
+          </div>
+        </section>
+
+        <section className="max-w-4xl mx-auto px-6 pb-20">
+          <Card className="p-10 text-center" glass>
+            <h2 className="text-3xl font-bold mb-3">Start Reviewing Contracts Faster</h2>
+            <p className="mb-6" style={{ color: 'var(--color-text-tertiary)' }}>
+              Create an account and run your first analysis in minutes.
+            </p>
+            <Link to="/register">
+              <Button size="lg" className="gap-2">
+                Create Free Account
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </Card>
+        </section>
+      </main>
 
       <Footer />
     </div>

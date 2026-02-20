@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Pencil, Trash2, Download, Eye } from 'lucide-react';
+import { Pencil, Trash2, Download, Eye, History } from 'lucide-react';
 import { setUser } from '../store/authSlice';
 import { showToast } from '../store/uiSlice';
 import { authService } from '../services/authService';
 import { contractService } from '../services/contractService';
+import { generationService } from '../services/generationService';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -18,6 +19,11 @@ function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [contracts, setContracts] = useState([]);
   const [loadingContracts, setLoadingContracts] = useState(true);
+  const [selectedContractId, setSelectedContractId] = useState('');
+  const [versions, setVersions] = useState([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [versionsPage, setVersionsPage] = useState(1);
+  const [versionsTotalPages, setVersionsTotalPages] = useState(1);
   const [profileForm, setProfileForm] = useState({
     name: '',
     phone: '',
@@ -41,6 +47,9 @@ function ProfilePage() {
         const res = await contractService.getContracts(0, 20);
         if (!mounted) return;
         setContracts(res.contracts || []);
+        if ((res.contracts || []).length > 0) {
+          setSelectedContractId(res.contracts[0].id);
+        }
       } catch {
         if (!mounted) return;
         setContracts([]);
@@ -52,6 +61,34 @@ function ProfilePage() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!selectedContractId) {
+      setVersions([]);
+      return;
+    }
+
+    let mounted = true;
+    (async () => {
+      try {
+        setLoadingVersions(true);
+        const res = await generationService.getVersions(selectedContractId, versionsPage, 10);
+        if (!mounted) return;
+        setVersions(res.versions || []);
+        setVersionsTotalPages(res.total_pages || 1);
+      } catch {
+        if (!mounted) return;
+        setVersions([]);
+        setVersionsTotalPages(1);
+      } finally {
+        if (mounted) setLoadingVersions(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedContractId, versionsPage]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -98,6 +135,33 @@ function ProfilePage() {
       dispatch(showToast({ type: 'success', title: 'Deleted', message: 'Contract deleted successfully.' }));
     } catch (err) {
       const message = err.response?.data?.detail || err.message || 'Delete failed';
+      dispatch(showToast({ type: 'error', title: 'Delete Failed', message }));
+    }
+  };
+
+  const handleVersionDownload = async (contractId, versionId, fallbackUrl) => {
+    try {
+      if (fallbackUrl) {
+        window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      const res = await generationService.downloadVersion(contractId, versionId);
+      if (res?.download_url) {
+        window.open(res.download_url, '_blank', 'noopener,noreferrer');
+      }
+    } catch (err) {
+      const message = err.response?.data?.detail || err.message || 'Version download failed';
+      dispatch(showToast({ type: 'error', title: 'Download Failed', message }));
+    }
+  };
+
+  const handleVersionDelete = async (contractId, versionId) => {
+    try {
+      await generationService.deleteVersion(contractId, versionId);
+      setVersions((prev) => prev.filter((v) => v.id !== versionId));
+      dispatch(showToast({ type: 'success', title: 'Version Deleted', message: 'Generated version deleted.' }));
+    } catch (err) {
+      const message = err.response?.data?.detail || err.message || 'Version delete failed';
       dispatch(showToast({ type: 'error', title: 'Delete Failed', message }));
     }
   };
@@ -209,6 +273,101 @@ function ProfilePage() {
               </tbody>
             </table>
             {contracts.length === 0 && <p className="text-gray-600 py-6">No contracts uploaded yet.</p>}
+          </div>
+        )}
+      </Card>
+
+      <Card>
+        <div className="flex items-center gap-2 mb-4">
+          <History className="w-5 h-5 text-gray-700" />
+          <h2 className="text-xl font-semibold text-gray-900">Generated Revision History</h2>
+        </div>
+        <div className="flex items-center gap-3 mb-4">
+          <label className="text-sm text-gray-700 font-medium">Contract</label>
+          <select
+            value={selectedContractId}
+            onChange={(e) => {
+              setSelectedContractId(e.target.value);
+              setVersionsPage(1);
+            }}
+            className="px-3 py-2 rounded-lg border border-gray-300 text-sm min-w-[260px]"
+          >
+            {contracts.map((contract) => (
+              <option key={contract.id} value={contract.id}>
+                {contract.title || contract.filename}
+              </option>
+            ))}
+            {contracts.length === 0 && <option value="">No contracts available</option>}
+          </select>
+        </div>
+
+        {loadingVersions ? (
+          <p className="text-gray-600">Loading generated versions...</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Version</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Format</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Suggestions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Generated At</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {versions.map((v) => (
+                  <tr key={v.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 text-sm font-medium text-gray-900">v{v.version}</td>
+                    <td className="px-4 py-4 text-sm text-gray-600">{v.format?.toUpperCase()}</td>
+                    <td className="px-4 py-4 text-sm text-gray-600">{v.applied_suggestions_count || 0}</td>
+                    <td className="px-4 py-4 text-sm text-gray-600">
+                      {v.generated_at ? new Date(v.generated_at).toLocaleString() : '-'}
+                    </td>
+                    <td className="px-4 py-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleVersionDownload(selectedContractId, v.id, v.download_url)}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-600 hover:text-blue-600 transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleVersionDelete(selectedContractId, v.id)}
+                          className="p-1.5 hover:bg-gray-100 rounded text-gray-600 hover:text-red-600 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {versions.length === 0 && (
+              <p className="text-gray-600 py-6">No generated versions for this contract yet.</p>
+            )}
+            <div className="flex items-center justify-end gap-2 mt-4">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={versionsPage <= 1}
+                onClick={() => setVersionsPage((p) => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-gray-600">
+                Page {versionsPage} of {versionsTotalPages}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={versionsPage >= versionsTotalPages}
+                onClick={() => setVersionsPage((p) => Math.min(versionsTotalPages, p + 1))}
+              >
+                Next
+              </Button>
+            </div>
           </div>
         )}
       </Card>

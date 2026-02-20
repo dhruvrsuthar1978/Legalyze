@@ -7,7 +7,7 @@ function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div>
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary-600)] to-[var(--color-accent-blue)] rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-600)' }}>
                 <span className="text-white font-bold text-xl">L</span>
               </div>
               <span className="text-xl font-bold text-white">Legalyze</span>

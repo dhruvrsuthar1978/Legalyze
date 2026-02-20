@@ -150,7 +150,6 @@ function UploadPage() {
       }
 
       // Start polling processing status
-      let finished = false;
       let attempts = 0;
       const maxAttempts = 120; // 4 minutes at 2s interval
 
@@ -172,7 +171,6 @@ function UploadPage() {
           }
 
           if (status === 'completed' || status === 'done' || status === 'finished') {
-            finished = true;
             clearInterval(pollInterval);
             setUploadProgress(100);
             setUploadStatus('success');
@@ -180,14 +178,12 @@ function UploadPage() {
             dispatch(showToast({ type: 'success', title: 'Analysis Complete', message: 'Contract analysis finished.' }));
             navigate(`/contract/${result.id}`);
           } else if (status === 'failed' || status === 'error') {
-            finished = true;
             clearInterval(pollInterval);
             setUploadStatus('error');
             setUploadProgress(0);
             dispatch(uploadFailure('Analysis failed'));
             dispatch(showToast({ type: 'error', title: 'Analysis Failed', message: statusRes.message || 'Analysis failed on server.' }));
           } else if (attempts >= maxAttempts) {
-            finished = true;
             clearInterval(pollInterval);
             setUploadStatus('processing');
             dispatch(showToast({ type: 'info', title: 'Processing Delayed', message: 'Analysis is taking longer than expected. You can check status on the contract page.' }));

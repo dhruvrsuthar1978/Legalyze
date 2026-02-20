@@ -19,6 +19,7 @@ function Input({
           ${error ? 'border-2 border-[var(--color-error)]' : 'border border-[var(--color-neutral-300)]'}
           ${props.disabled ? 'bg-[var(--color-neutral-100)] cursor-not-allowed' : 'bg-white hover:border-[var(--color-neutral-400)]'}
           ${className}`}
+        style={{ color: '#0F172A' }}
         {...props}
       />
       {error && (

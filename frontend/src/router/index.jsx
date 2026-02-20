@@ -6,6 +6,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import LandingPage from '../pages/LandingPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
+import AboutPage from '../pages/AboutPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import Dashboard from '../pages/Dashboard';
 import UploadPage from '../pages/UploadPage';
@@ -13,6 +14,7 @@ import ContractAnalysisPage from '../pages/ContractAnalysisPage';
 import GeneratePage from '../pages/GeneratePage';
 import ComparePage from '../pages/ComparePage';
 import SignaturePage from '../pages/SignaturePage';
+import ContractAssistantPage from '../pages/ContractAssistantPage';
 import ProfilePage from '../pages/ProfilePage';
 import AdminPage from '../pages/AdminPage';
 import SettingsPage from '../pages/SettingsPage';
@@ -29,6 +31,10 @@ const router = createBrowserRouter([
   {
     path: '/register',
     element: <RegisterPage />,
+  },
+  {
+    path: '/about',
+    element: <AboutPage />,
   },
   {
     path: '/forgot-password',
@@ -59,6 +65,10 @@ const router = createBrowserRouter([
           {
             path: '/compare',
             element: <ComparePage />,
+          },
+          {
+            path: '/assistant',
+            element: <ContractAssistantPage />,
           },
           {
             path: '/signature/:id?',

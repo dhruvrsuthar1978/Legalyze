@@ -1,13 +1,15 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/authSlice';
 import { toggleSidebar, toggleTheme } from '../../store/uiSlice';
 import { Menu, LogOut, Settings, User, Moon, Sun } from 'lucide-react';
 import { Menu as HeadlessMenu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
 import Button from '../ui/Button';
+import Logo from '../ui/Logo';
 
 function Navbar() {
   const dispatch = useDispatch();
+  const location = useLocation();
   const { isAuthenticated, user } = useSelector(state => state.auth);
   const { theme } = useSelector(state => state.ui);
 
@@ -16,31 +18,35 @@ function Navbar() {
   };
 
   return (
-    <nav className="flex-shrink-0 px-6 py-4 backdrop-blur-md" style={{ borderBottom: 'var(--border-thin) solid var(--color-neutral-200)', backgroundColor: 'var(--color-bg-primary)' }}>
-      <div className="flex items-center justify-between max-w-[1600px] mx-auto">
-        <div className="flex items-center gap-4">
+    <nav
+      className="shrink-0 px-4 py-3 border-b"
+      style={{ borderColor: 'var(--color-neutral-200)', backgroundColor: 'var(--color-bg-primary)' }}
+    >
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-3">
           {isAuthenticated && (
-            <button
-              onClick={() => dispatch(toggleSidebar())}
-              className="lg:hidden p-2 hover:bg-[var(--color-neutral-100)] rounded-lg smooth-transition"
-            >
-              <Menu className="w-5 h-5" style={{ color: 'var(--color-neutral-600)' }} />
-            </button>
+            <>
+              <button
+                onClick={() => dispatch(toggleSidebar())}
+                className="lg:hidden p-2 rounded-md hover:bg-neutral-100"
+                aria-label="Toggle mobile sidebar"
+              >
+                <Menu className="w-5 h-5" style={{ color: 'var(--color-neutral-600)' }} />
+              </button>
+            </>
           )}
           {!isAuthenticated && (
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary-600)] to-[var(--color-accent-blue)] rounded-xl flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-xl">L</span>
-              </div>
-              <span className="text-xl font-bold gradient-text">Legalyze</span>
+            <Link to="/" className="flex items-center gap-2">
+              <Logo size="md" />
+              <span className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>Legalyze</span>
             </Link>
           )}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => dispatch(toggleTheme())}
-            className="p-2.5 rounded-xl hover:bg-[var(--color-neutral-100)] smooth-transition"
+            className="p-2 rounded-md hover:bg-neutral-100"
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? (
@@ -51,22 +57,23 @@ function Navbar() {
           </button>
           {isAuthenticated ? (
             <HeadlessMenu as="div" className="relative">
-              <MenuButton className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-[var(--color-neutral-100)] smooth-transition">
-                <div className="w-9 h-9 bg-gradient-to-br from-[var(--color-primary-100)] to-[var(--color-primary-200)] rounded-lg flex items-center justify-center">
+              <MenuButton className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-neutral-100">
+                <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-100)' }}>
                   <User className="w-5 h-5" style={{ color: 'var(--color-primary-600)' }} />
                 </div>
-                <span className="text-sm font-semibold hidden sm:block" style={{ color: 'var(--color-neutral-700)' }}>
+                <span className="text-sm font-medium hidden sm:block" style={{ color: 'var(--color-neutral-700)' }}>
                   {user?.name || 'User'}
                 </span>
               </MenuButton>
               <MenuItems 
                 anchor="bottom end"
-                className="floating-island mt-2 w-56 overflow-hidden focus:outline-hidden"
+                className="mt-2 w-56 overflow-hidden rounded-md border bg-white shadow-sm focus:outline-hidden"
+                style={{ borderColor: 'var(--color-neutral-200)', backgroundColor: 'var(--color-bg-primary)' }}
               >
                 <MenuItem>
                   <Link
                     to="/profile"
-                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium hover:bg-[var(--color-neutral-50)] smooth-transition"
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-neutral-50"
                     style={{ color: 'var(--color-neutral-700)' }}
                   >
                     <User className="w-4 h-4" />
@@ -76,7 +83,7 @@ function Navbar() {
                 <MenuItem>
                   <Link
                     to="/settings"
-                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium hover:bg-[var(--color-neutral-50)] smooth-transition"
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-neutral-50"
                     style={{ color: 'var(--color-neutral-700)' }}
                   >
                     <Settings className="w-4 h-4" />
@@ -87,7 +94,7 @@ function Navbar() {
                 <MenuItem>
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium hover:bg-red-50 smooth-transition"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-red-50"
                     style={{ color: 'var(--color-error)' }}
                   >
                     <LogOut className="w-4 h-4" />
@@ -98,6 +105,15 @@ function Navbar() {
             </HeadlessMenu>
           ) : (
             <div className="flex items-center gap-3">
+              {location.pathname === '/about' ? (
+                <Link to="/">
+                  <Button variant="ghost" size="sm">Home</Button>
+                </Link>
+              ) : (
+                <Link to="/about">
+                  <Button variant="ghost" size="sm">About</Button>
+                </Link>
+              )}
               <Link to="/login">
                 <Button variant="ghost" size="sm">Login</Button>
               </Link>
